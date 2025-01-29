@@ -60,7 +60,7 @@ jobs:
       - name: Run mypy
         run: |
           mkdir .mypy_cache
-          mypy --install-types --cache-dir=.mypy_cache/ --non-interactive --html-report mypy-report src/dsfit
+          mypy --install-types --cache-dir=.mypy_cache/ --non-interactive --html-report mypy-report src/xfit
 
       - name: Upload mypy results
         uses: actions/upload-artifact@v4
@@ -73,7 +73,7 @@ jobs:
   changelog:
     name: Update changelog
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.repository == 'mgjho/dsfit_py'
+    if: github.event_name == 'push' && github.repository == 'mgjho/xfit'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -112,7 +112,7 @@ jobs:
     needs: [test, mypy]
     if: |
       github.event_name == 'workflow_dispatch' &&
-      github.repository == 'mgjho/dsfit_py' &&
+      github.repository == 'mgjho/xfit' &&
       inputs.do_release
     permissions:
       id-token: write
