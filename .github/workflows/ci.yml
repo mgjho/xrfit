@@ -1,0 +1,139 @@
+name: Test and Release
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      do_release:
+        description: 'Create a new release'
+        required: true
+        type: boolean
+env:
+  FORCE_COLOR: 1
+
+jobs:
+  test:
+    name: Test Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    env:
+      DISPLAY: ':99.0'
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install pytest and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -v .[dev]
+          python -m pip list
+
+      - name: Test with pytest
+        run: |
+          python -m pytest -vv --full-trace
+
+  mypy:
+    name: Static type checking
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install mypy and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .[dev] mypy[reports,faster-cache]
+          python -m pip list
+
+      - name: Run mypy
+        run: |
+          mkdir .mypy_cache
+          mypy --install-types --cache-dir=.mypy_cache/ --non-interactive --html-report mypy-report src/dsfit
+
+      - name: Upload mypy results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mypy-report
+          path: mypy-report/
+          if-no-files-found: error
+
+  changelog:
+    name: Update changelog
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.repository == 'mgjho/dsfit_py'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install commitizen
+
+      - name: Generate changelog
+        run: |
+          cz changelog
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          if ! git diff-index --quiet HEAD; then
+            git commit -m "chore: update changelog"
+            git push
+          else
+            echo "nothing to commit, working tree clean"
+          fi
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    concurrency:
+      group: release
+    needs: [test, mypy]
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      github.repository == 'mgjho/dsfit_py' &&
+      inputs.do_release
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run commitizen
+        id: cz
+        uses: commitizen-tools/commitizen-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          changelog_increment_filename: body.md
+
+      - name: Publish package distributions to GitHub Releases
+        id: github-release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: "body.md"
+          tag_name: v${{ steps.cz.outputs.version }}
+          token: ${{ secrets.GITHUB_TOKEN }}
