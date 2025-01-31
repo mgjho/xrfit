@@ -9,5 +9,3 @@ xrfit provides Model-based, Multidimensional regression/analysis methods. By Int
 [*xarray*](https://xarray.pydata.org/) to handle multivariate data by utilizing coordinate-aware structure of DataArray.
 
 [*lmfit*](https://lmfit.github.io/lmfit-py/) to deal complex regression problems using the composite-model based approach.
-
-
