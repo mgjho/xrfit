@@ -4,8 +4,6 @@ import numpy as np
 import xarray as xr
 from lmfit.models import LorentzianModel
 
-import xrfit
-
 
 def test_fit():
     rng = np.random.default_rng(seed=0)

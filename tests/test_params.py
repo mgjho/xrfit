@@ -2,8 +2,6 @@ import dill
 import lmfit as lf
 import xarray as xr
 
-import xrfit
-
 
 def test_params():
     with open("fit_result.dill", "rb") as f:
