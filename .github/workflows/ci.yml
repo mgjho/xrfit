@@ -40,13 +40,19 @@ jobs:
 
       - name: Test with pytest
         run: |
-          python -u -m pytest --cov xrfit --cov-report=xml
+          python -u -m pytest -v --cov xrfit --junitxml=junit.xml
 
       - name: Upload results to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: mgjho/xrfit
+
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
   mypy:
     name: Static type checking
     runs-on: ubuntu-latest
