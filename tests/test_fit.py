@@ -4,7 +4,7 @@ import numpy as np
 import xarray as xr
 from lmfit.models import LorentzianModel
 
-import xfit
+import xrfit
 
 
 def test_fit():

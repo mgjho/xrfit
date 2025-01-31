@@ -3,10 +3,10 @@ requires = ["setuptools>=61", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "xfit"
+name = "xrfit"
 version = "0.1.0"
 authors = [{ name = "Mingi Jho", email = "mingi.jho@kaist.ac.kr" }]
-description = "xfit"
+description = "xrfit"
 readme = "README.md"
 requires-python = ">=3.11"
 keywords = ["Data Analysis", "Fitting"]
@@ -40,8 +40,8 @@ dev = [
 
 
 [project.urls]
-Repository = "https://github.com/mgjho/xfit.git"
-Issues = "https://github.com/mgjho/xfit/issues"
+Repository = "https://github.com/mgjho/xrfit.git"
+Issues = "https://github.com/mgjho/xrfit/issues"
 
 [tool.commitizen]
 change_type_map = { "BREAKING CHANGE" = "💥 Breaking Changes", "feat" = "✨ Features", "fix" = "🐞 Bug Fixes", "refactor" = "♻️ Code Refactor", "perf" = "⚡️ Performance" }

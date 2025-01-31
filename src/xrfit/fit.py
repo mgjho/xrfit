@@ -1,7 +1,7 @@
 import lmfit as lf
 import xarray as xr
 
-from xfit.base import DataArrayAccessor
+from xrfit.base import DataArrayAccessor
 
 
 @xr.register_dataarray_accessor("fit")

@@ -2,7 +2,7 @@ import numpy as np
 import xarray as xr
 from scipy.ndimage import gaussian_filter
 
-from xfit.base import DataArrayAccessor
+from xrfit.base import DataArrayAccessor
 
 
 @xr.register_dataarray_accessor("params")

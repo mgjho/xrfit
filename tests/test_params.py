@@ -2,7 +2,7 @@ import dill
 import lmfit as lf
 import xarray as xr
 
-import xfit
+import xrfit
 
 
 def test_params():
