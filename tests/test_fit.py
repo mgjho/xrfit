@@ -1,3 +1,4 @@
+import dill
 import lmfit as lf
 import numpy as np
 import xarray as xr
@@ -37,3 +38,5 @@ def test_fit():
     assert result.shape == (3,)
     assert result.dims == ("y",)
     assert isinstance(result[0].item(), lf.model.ModelResult)
+    with open("fit_result.dill", "wb") as f:
+        dill.dump(result, f)
