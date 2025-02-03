@@ -5,6 +5,39 @@ from lmfit.models import LorentzianModel
 from qtpy import QtWidgets
 
 
+def get_test_result():
+    rng = np.random.default_rng(seed=0)
+    x = np.linspace(-10, 10, 200)
+    y = np.linspace(-5, 5, 2)
+    z = np.linspace(0, 2, 3)
+    model = LorentzianModel()
+    data = xr.DataArray(
+        np.stack(
+            [
+                [
+                    model.eval(x=x, amplitude=1, center=0, sigma=0.1),
+                    model.eval(x=x, amplitude=1, center=0, sigma=0.2),
+                ],
+                [
+                    model.eval(x=x, amplitude=1, center=0, sigma=0.2),
+                    model.eval(x=x, amplitude=1, center=0, sigma=0.3),
+                ],
+                [
+                    model.eval(x=x, amplitude=1, center=0, sigma=0.3),
+                    model.eval(x=x, amplitude=1, center=0, sigma=0.4),
+                ],
+            ],
+        ).transpose()
+        + rng.normal(size=(x.size, y.size, z.size)) * 0.01,
+        coords={"x": x, "y": y, "z": z},
+        dims=("x", "y", "z"),
+    )
+
+    guess = data.fit.guess(model=model)
+    result = data.fit(model=model, params=guess)
+    return result
+
+
 def test_fit_3d(qtbot):
     rng = np.random.default_rng(seed=0)
     x = np.linspace(-10, 10, 200)
@@ -105,5 +138,7 @@ def test_fit(qtbot):
     qtbot.addWidget(result.display.main_widget)
     assert isinstance(result.display.main_widget, QtWidgets.QWidget)
     result.display.main_widget.close()
+    # with open("fit_result.dill", "wb") as f:
+    #     dill.dump(result, f)
     # with open("fit_result.dill", "wb") as f:
     #     dill.dump(result, f)
