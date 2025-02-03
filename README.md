@@ -30,6 +30,3 @@
     ```python
     fit_result.display()
     ```
-
-
-
