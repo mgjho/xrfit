@@ -1,5 +1,7 @@
-## v0.1.0 (2025-01-30)
+## Unreleased
 
 ### ✨ Features
 
-- Add FitAccessor for handling xarray object in lmfit way
+- add params and display accessor (#10)
+
+## v0.1.0 (2025-01-30)
