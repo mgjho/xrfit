@@ -1,14 +1,16 @@
-name: Test and Release
+name: Test
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+  pull_request:
   workflow_dispatch:
-    inputs:
-      do_release:
-        description: 'Create a new release'
-        required: true
-        type: boolean
+  schedule:
+    # Every friday at 22:00 UTC (Every saturday at 07:00 KST/JST)
+    - cron: "0 22 * * FRI"
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 env:
   FORCE_COLOR: 1
 

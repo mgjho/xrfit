@@ -1,11 +1,11 @@
-import dill
 import lmfit as lf
 import numpy as np
 import xarray as xr
 from lmfit.models import LorentzianModel
+from qtpy import QtWidgets
 
 
-def test_fit_3d():
+def test_fit_3d(qtbot):
     rng = np.random.default_rng(seed=0)
     x = np.linspace(-10, 10, 200)
     y = np.linspace(-5, 5, 2)
@@ -48,11 +48,16 @@ def test_fit_3d():
     assert result.shape == (y.size, z.size)
     assert result.dims == ("y", "z")
     assert isinstance(result[0, 0].item(), lf.model.ModelResult)
-    with open("fit_result_3d.dill", "wb") as f:
-        dill.dump(result, f)
+
+    result.display()
+    qtbot.addWidget(result.display.main_widget)
+    assert isinstance(result.display.main_widget, QtWidgets.QWidget)
+    result.display.main_widget.close()
+    # with open("fit_result_3d.dill", "wb") as f:
+    #     dill.dump(result, f)
 
 
-def test_fit():
+def test_fit(qtbot):
     rng = np.random.default_rng(seed=0)
     x = np.linspace(-10, 10, 200)
     y = np.linspace(0, 2, 3)
@@ -85,5 +90,20 @@ def test_fit():
     assert result.shape == (y.size,)
     assert result.dims == ("y",)
     assert isinstance(result[0].item(), lf.model.ModelResult)
-    with open("fit_result.dill", "wb") as f:
-        dill.dump(result, f)
+
+    params = result.params()
+    assert isinstance(params, xr.DataArray)
+    assert isinstance(params[0].item(), lf.Parameters)
+    sorted_result = result.params.sort("center")
+    assert isinstance(sorted_result, xr.DataArray)
+    assert isinstance(sorted_result[0].item(), lf.model.ModelResult)
+    smoothend_result = result.params.smoothen("center", 5)
+    assert isinstance(smoothend_result, xr.DataArray)
+    assert isinstance(smoothend_result[0].item(), lf.model.ModelResult)
+
+    result.display()
+    qtbot.addWidget(result.display.main_widget)
+    assert isinstance(result.display.main_widget, QtWidgets.QWidget)
+    result.display.main_widget.close()
+    # with open("fit_result.dill", "wb") as f:
+    #     dill.dump(result, f)
