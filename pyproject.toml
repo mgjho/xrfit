@@ -26,6 +26,8 @@ dependencies = [
     "xarray",
     "scipy",
     "lmfit",
+    "pyqtgraph",
+    "pyqt",
 ]
 
 [project.optional-dependencies]
@@ -38,6 +40,8 @@ dev = [
     "ruff>=0.6.3",
     "pytest-qt>=4.4.0"
 ]
+pyqt6 = ["pyqt6>=6.8.0"]
+
 
 
 [project.urls]
