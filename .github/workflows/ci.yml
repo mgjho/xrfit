@@ -14,42 +14,52 @@ env:
 
 jobs:
   test:
-    name: Test Python ${{ matrix.python-version }}
+    name: Test Python ${{ matrix.python-version }} [${{ matrix.qt-api }}]
     runs-on: ubuntu-latest
     env:
-      DISPLAY: ':99.0'
+      DISPLAY: ":99.0"
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12"]
-
+        python-version: ["3.11", "3.12", "3.13"]
+        qt-api: ["pyqt6", "pyside6"]
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+
+      - uses: tlambert03/setup-qt-libs@v1
+      - name: Setup for Qt testing
+        run: |
+          /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1920x1200x24 -ac +extension GLX
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
+          enable-cache: true
           python-version: ${{ matrix.python-version }}
 
-      - name: Install pytest and dependencies
+      - name: Install project with all extras
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -v .[dev]
-          python -m pip list
+          uv sync --all-extras --dev --group ${{ matrix.qt-api }} --upgrade
+          export QT_API=${{ matrix.qt-api }}
 
       - name: Test with pytest
-        run: |
-          python -u -m pytest -v --cov xrfit --junitxml=junit.xml
+        if: matrix.python-version != '3.12' || matrix.qt-api != 'pyqt6'
+        run: uv run pytest
 
-      - name: Upload results to Codecov
+      - name: Test with pytest with coverage
+        if: matrix.python-version == '3.12' && matrix.qt-api == 'pyqt6'
+        run: uv run pytest -v --cov xrfit --junitxml=junit.xml
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.12' && matrix.qt-api == 'pyqt6'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: mgjho/xrfit
 
       - name: Upload test results to Codecov
-        if: ${{ !cancelled() }}
+        if: ${{ matrix.python-version == '3.12' && matrix.qt-api == 'pyqt6' && !cancelled() }}
         uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -58,20 +68,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: '3.12'
+          enable-cache: true
+          python-version: "3.12"
 
       - name: Install mypy and dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install .[dev] mypy[reports,faster-cache]
-          python -m pip list
+        run: uv sync --all-extras --dev --group pyqt6
 
       - name: Run mypy
-        run: |
-          mkdir .mypy_cache
-          mypy --install-types --cache-dir=.mypy_cache/ --non-interactive --html-report mypy-report src/xrfit
+        run: uv run mypy --install-types --non-interactive --html-report mypy-report .
 
       - name: Upload mypy results
         uses: actions/upload-artifact@v4
@@ -92,12 +100,13 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.13"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install commitizen
+          python -m pip install --pre numba
+          python -m pip install commitizen cz-changeup
 
       - name: Generate changelog
         run: |
@@ -114,37 +123,3 @@ jobs:
           else
             echo "nothing to commit, working tree clean"
           fi
-
-  release:
-    name: Release
-    runs-on: ubuntu-latest
-    concurrency:
-      group: release
-    needs: [test, mypy]
-    if: |
-      github.event_name == 'workflow_dispatch' &&
-      github.repository == 'mgjho/xrfit' &&
-      inputs.do_release
-    permissions:
-      id-token: write
-      contents: write
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Run commitizen
-        id: cz
-        uses: commitizen-tools/commitizen-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          changelog_increment_filename: body.md
-
-      - name: Publish package distributions to GitHub Releases
-        id: github-release
-        uses: softprops/action-gh-release@v2
-        with:
-          body_path: "body.md"
-          tag_name: v${{ steps.cz.outputs.version }}
-          token: ${{ secrets.GITHUB_TOKEN }}

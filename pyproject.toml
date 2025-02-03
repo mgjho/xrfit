@@ -22,12 +22,13 @@ classifiers = [
 ]
 
 dependencies = [
-    "numpy",
-    "xarray",
-    "scipy",
-    "lmfit",
-    "pyqtgraph",
-    "pyqt",
+    "numpy>=1.3.2",
+    "scipy>=1.15.1",
+    "pytest>=8.3.4",
+    "qtpy>=2.4.2",
+    "xarray>=2025.1.2",
+    "pyqtgraph>=0.13.7",
+    "lmfit>=1.3.2",
 ]
 
 [project.optional-dependencies]
@@ -174,3 +175,6 @@ check_untyped_defs = false
 exclude = ['^docs/', '^tests/']
 disable_error_code = ['import-untyped', 'import-not-found']
 pretty = true
+
+[tool.uv.workspace]
+members = ["xrfit"]
