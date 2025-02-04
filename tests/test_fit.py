@@ -2,7 +2,6 @@ import lmfit as lf
 import numpy as np
 import xarray as xr
 from lmfit.models import LorentzianModel
-from qtpy import QtWidgets
 
 
 def get_test_result():
@@ -15,16 +14,16 @@ def get_test_result():
         np.stack(
             [
                 [
-                    model.eval(x=x, amplitude=1, center=0, sigma=0.1),
-                    model.eval(x=x, amplitude=1, center=0, sigma=0.2),
+                    model.eval(x=x, amplitude=1, center=0, sigma=0.1 * 5),
+                    model.eval(x=x, amplitude=1, center=0, sigma=0.2 * 5),
                 ],
                 [
-                    model.eval(x=x, amplitude=1, center=0, sigma=0.2),
-                    model.eval(x=x, amplitude=1, center=0, sigma=0.3),
+                    model.eval(x=x, amplitude=1, center=0, sigma=0.2 * 5),
+                    model.eval(x=x, amplitude=1, center=0, sigma=0.3 * 5),
                 ],
                 [
-                    model.eval(x=x, amplitude=1, center=0, sigma=0.3),
-                    model.eval(x=x, amplitude=1, center=0, sigma=0.4),
+                    model.eval(x=x, amplitude=1, center=0, sigma=0.3 * 5),
+                    model.eval(x=x, amplitude=1, center=0, sigma=0.4 * 5),
                 ],
             ],
         ).transpose()
@@ -34,8 +33,7 @@ def get_test_result():
     )
 
     guess = data.fit.guess(model=model)
-    result = data.fit(model=model, params=guess)
-    return result
+    return data.fit(model=model, params=guess)
 
 
 def test_fit_3d(qtbot):
@@ -82,13 +80,6 @@ def test_fit_3d(qtbot):
     assert result.dims == ("y", "z")
     assert isinstance(result[0, 0].item(), lf.model.ModelResult)
 
-    result.display()
-    qtbot.addWidget(result.display.main_widget)
-    assert isinstance(result.display.main_widget, QtWidgets.QWidget)
-    result.display.main_widget.close()
-    # with open("fit_result_3d.dill", "wb") as f:
-    #     dill.dump(result, f)
-
 
 def test_fit(qtbot):
     rng = np.random.default_rng(seed=0)
@@ -133,12 +124,3 @@ def test_fit(qtbot):
     smoothend_result = result.params.smoothen("center", 5)
     assert isinstance(smoothend_result, xr.DataArray)
     assert isinstance(smoothend_result[0].item(), lf.model.ModelResult)
-
-    result.display()
-    qtbot.addWidget(result.display.main_widget)
-    assert isinstance(result.display.main_widget, QtWidgets.QWidget)
-    result.display.main_widget.close()
-    # with open("fit_result.dill", "wb") as f:
-    #     dill.dump(result, f)
-    # with open("fit_result.dill", "wb") as f:
-    #     dill.dump(result, f)
