@@ -1,4 +1,5 @@
 import lmfit as lf
+import numpy as np
 import xarray as xr
 
 from xrfit.base import DataArrayAccessor
@@ -120,3 +121,57 @@ class FitAccessor(DataArrayAccessor):
             vectorize=True,
             dask="parallelized",
         )
+
+    def fit_with_correlation(
+        self,
+        model: lf.model.Model,
+        start_dict: dict,
+        input_core_dims: str = "x",
+        **kws,
+    ) -> xr.DataArray:
+        """
+        Fit the model starting from a certain index and use the resulting parameters for the next fit.
+
+        Parameters
+        ----------
+        model : lf.model.Model
+            The model to be fitted.
+        start_index : tuple
+            The starting index for the fit.
+        input_core_dims : str, optional
+            The dimension name for the input data, by default "x".
+
+        Returns
+        -------
+        xr.DataArray
+            The result of the model fitting with correlated parameters.
+        """
+        # Do the rough fit
+        fit_results = self.__call__(model=model, input_core_dims=input_core_dims)
+
+        dims = fit_results.dims
+        start_tuple = tuple(start_dict.values())
+        dims_tuple = tuple(fit_results.sizes[dim] for dim in dims)
+        start_idx = np.ravel_multi_index(start_tuple, dims_tuple)
+        total_idx = np.prod(dims_tuple)
+        previous_params = fit_results.params.__call__().isel(start_dict).item()
+
+        for idx in range(start_idx - 1, -1, -1):
+            indices = np.unravel_index(idx, dims_tuple)
+            index_dict = dict(zip(dims, indices, strict=False))
+            single_fit_result = fit_results.isel(index_dict).item()
+            single_fit_result.fit(params=previous_params)
+            fit_results[index_dict] = single_fit_result
+            print("idx", idx)
+
+        previous_params = fit_results.params.__call__().isel(start_dict).item()
+
+        for idx in range(start_idx + 1, total_idx):
+            indices = np.unravel_index(idx, dims_tuple)
+            index_dict = dict(zip(dims, indices, strict=False))
+            single_fit_result = fit_results.isel(index_dict).item()
+            single_fit_result.fit(params=previous_params)
+            fit_results[index_dict] = single_fit_result
+            print("idx", idx)
+
+        return fit_results

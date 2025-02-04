@@ -19,14 +19,15 @@
     ```python
     model = Model_1() + Model_2()
     guess = data.fit.guess(model=model)
-    fit_result = data.fit(model=model, params=guess)
+    result = data.fit(model=model, params=guess)
     ```
 2. __Parameter handling__ (e.g. Sorting and Smoothing parameters)
     ```python
     sorted_result = result.params.sort("params_name")
-    smoothend_result = result.params.smoothen("params_name")
+    smoothened_result = sorted_result.params.smoothen("params_name")
+    new_result = data.fit(model=model, params=smoothened_result.parmams)
     ```
 3. __Interactive visualization__
     ```python
-    fit_result.display()
+    result.display()
     ```
