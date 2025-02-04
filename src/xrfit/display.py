@@ -24,16 +24,20 @@ class MainWindow(QtWidgets.QWidget):
         layout.addWidget(self.win)
         self.plot = self.win.addPlot(title="Fitting Result")
         initial_index = tuple([0] * (self._obj.ndim))
+        x = self._obj[initial_index].item().userkws["x"]
         self.init_curve = self.plot.plot(
-            self._obj[initial_index].item().init_fit,
+            x=x,
+            y=self._obj[initial_index].item().init_fit,
             pen=pg.mkPen("b", width=3),
         )
         self.curve = self.plot.plot(
-            self._obj[initial_index].item().best_fit,
+            x=x,
+            y=self._obj[initial_index].item().best_fit,
             pen=pg.mkPen("r", width=3),
         )
         self.data_curve = self.plot.plot(
-            self._obj[initial_index].item().data,
+            x=x,
+            y=self._obj[initial_index].item().data,
             symbol="o",
             pen=None,
             symbolBrush="k",
