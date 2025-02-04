@@ -1,5 +1,9 @@
 ## Unreleased
 
+### ✨ Features
+
+- add fit_with_correlation method for FitAccessor (#12)
+
 ## v0.2.0 (2025-02-03)
 
 ### ✨ Features
