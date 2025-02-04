@@ -4,13 +4,13 @@ import xarray as xr
 from lmfit.models import LorentzianModel
 
 
-def get_test_result():
+def get_test_data():
     rng = np.random.default_rng(seed=0)
     x = np.linspace(-10, 10, 200)
     y = np.linspace(-5, 5, 2)
     z = np.linspace(0, 2, 3)
     model = LorentzianModel()
-    data = xr.DataArray(
+    return xr.DataArray(
         np.stack(
             [
                 [
@@ -32,6 +32,10 @@ def get_test_result():
         dims=("x", "y", "z"),
     )
 
+
+def get_test_result():
+    data = get_test_data()
+    model = LorentzianModel()
     guess = data.fit.guess(model=model)
     return data.fit(model=model, params=guess)
 
