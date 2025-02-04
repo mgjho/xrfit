@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=61", "setuptools-scm>=8.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "xrfit"
@@ -68,12 +68,6 @@ change_type_order = [
     "♻️ Code Refactor",
     "⚡️ Performance",
 ]
-
-
-[tool.setuptools]
-package-dir = { "" = "src" }
-
-[tool.setuptools_scm]
 
 [tool.ruff]
 line-length = 88
