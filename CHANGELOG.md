@@ -1,7 +1,8 @@
-## v0.6.0 (2025-02-05)
+## Unreleased
 
 ### ✨ Features
 
+- enhance FitAccessor to accept additional keyword arguments in fit method
 - add ArrAccessor for getting fit_arr values (#18)
 - add visualization of fit stat to DisplayAccessor (#17)
 
