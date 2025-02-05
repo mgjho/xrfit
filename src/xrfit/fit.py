@@ -162,6 +162,7 @@ class FitAccessor(DataArrayAccessor):
             single_fit_result = fit_results.isel(index_dict).item()
             single_fit_result.fit(params=previous_params)
             fit_results[index_dict] = single_fit_result
+            previous_params = single_fit_result.params
 
         previous_params = fit_results.params.__call__().isel(start_dict).item()
 
@@ -171,5 +172,6 @@ class FitAccessor(DataArrayAccessor):
             single_fit_result = fit_results.isel(index_dict).item()
             single_fit_result.fit(params=previous_params)
             fit_results[index_dict] = single_fit_result
+            previous_params = single_fit_result.params
 
         return fit_results
