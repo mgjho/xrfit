@@ -5,6 +5,19 @@ import xarray as xr
 from xrfit.base import DataArrayAccessor
 
 
+def _generalized_guess(model, data, x):
+    if isinstance(model, lf.model.CompositeModel):
+        params = lf.Parameters()
+        if model.left is not None:
+            params.update(_generalized_guess(model.left, data, x))
+        if model.right is not None:
+            params.update(_generalized_guess(model.right, data, x))
+        return params
+    if hasattr(model, "guess"):
+        return model.guess(data, x=x)
+    raise ValueError(f"Model {model} does not support guess().")
+
+
 @xr.register_dataarray_accessor("fit")
 class FitAccessor(DataArrayAccessor):
     def guess(
@@ -30,7 +43,7 @@ class FitAccessor(DataArrayAccessor):
         This method uses `xr.apply_ufunc` to apply the model's guess function to the data
         """
         return xr.apply_ufunc(
-            model.guess,
+            lambda data, x: _generalized_guess(model, data, x),
             self._obj,
             input_core_dims=[[input_core_dims]],
             kwargs={
