@@ -122,11 +122,24 @@ class FitAccessor(DataArrayAccessor):
             dask="parallelized",
         )
 
-    def fit_with_correlation(
+    # def _get_attrs(
+    #     self,
+    #     fit_results: xr.DataArray,
+
+    # ):
+    #     return xr.apply_ufunc(
+    #         lambda x: x.,
+    #         fit_results,
+    #         vectorize=True,
+    #         dask="parallelized",
+    #         output_dtypes=[object],
+    #     )
+
+    def fit_with_corr(
         self,
         model: lf.model.Model,
-        start_dict: dict,
         input_core_dims: str = "x",
+        start_dict: dict | None = None,
         **kws,
     ) -> xr.DataArray:
         """
@@ -146,10 +159,12 @@ class FitAccessor(DataArrayAccessor):
         xr.DataArray
             The result of the model fitting with correlated parameters.
         """
-        # Do the rough fit
         fit_results = self.__call__(model=model, input_core_dims=input_core_dims)
-
         dims = fit_results.dims
+        if start_dict is None:
+            start_dict = fit_results.assess.best_fit_stat()
+            print("⚡️ No initial coords provided for fit_with_corr")
+            print("⚡️ Estimate used :", start_dict)
         start_tuple = tuple(start_dict.values())
         dims_tuple = tuple(fit_results.sizes[dim] for dim in dims)
         start_idx = np.ravel_multi_index(start_tuple, dims_tuple)
