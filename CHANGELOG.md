@@ -1,3 +1,9 @@
+## Unreleased
+
+### ✨ Features
+
+- implement auto-estimating initial coords for fit_with_corr method (#14)
+
 ## v0.4.0 (2025-02-05)
 
 ### ✨ Features
