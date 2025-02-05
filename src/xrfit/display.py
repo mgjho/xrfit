@@ -28,16 +28,6 @@ class MainWindow(QtWidgets.QWidget):
         self.plot = self.win.addPlot(title="Fitting Result")
         initial_index = tuple([0] * (self._obj.ndim))
         x = self._obj[initial_index].item().userkws["x"]
-        self.init_curve = self.plot.plot(
-            x=x,
-            y=self._obj[initial_index].item().init_fit,
-            pen=pg.mkPen("b", width=3),
-        )
-        self.curve = self.plot.plot(
-            x=x,
-            y=self._obj[initial_index].item().best_fit,
-            pen=pg.mkPen("r", width=3),
-        )
         self.data_curve = self.plot.plot(
             x=x,
             y=self._obj[initial_index].item().data,
@@ -45,6 +35,28 @@ class MainWindow(QtWidgets.QWidget):
             pen=None,
             symbolBrush="k",
         )
+        self.init_curve = self.plot.plot(
+            x=x,
+            y=self._obj[initial_index].item().init_fit,
+            pen=pg.mkPen("b", width=4),
+        )
+        self.curve = self.plot.plot(
+            x=x,
+            y=self._obj[initial_index].item().best_fit,
+            pen=pg.mkPen("r", width=4),
+        )
+
+        # Add individual component plots
+        self.component_curves = []
+        for component_name in self._obj[initial_index].item().eval_components():
+            component_curve = self.plot.plot(
+                x=x,
+                y=self._obj[initial_index].item().eval_components()[component_name],
+                pen=pg.mkPen("orange", width=2, style=QtCore.Qt.PenStyle.DashLine),
+                name=component_name,
+            )
+            self.component_curves.append(component_curve)
+
         self.fix_ylim_checkbox = QtWidgets.QCheckBox("Fix Y-Axis Limits")
         self.fix_ylim_checkbox.toggled.connect(self.toggle_ylim)
         layout.addWidget(self.fix_ylim_checkbox)
@@ -130,6 +142,13 @@ class MainWindow(QtWidgets.QWidget):
         self.curve.setData(self._obj[index].item().best_fit)
         self.init_curve.setData(self._obj[index].item().init_fit)
         self.data_curve.setData(self._obj[index].item().data)
+
+        # Update individual component plots
+        components = self._obj[index].item().eval_components()
+        for component_curve, component_name in zip(
+            self.component_curves, components.keys(), strict=False
+        ):
+            component_curve.setData(components[component_name])
 
         self.update_slider_label_color(index)
         self.update_fit_stat_label(index)
