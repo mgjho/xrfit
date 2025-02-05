@@ -12,13 +12,20 @@ def get_test_data_2d():
     return xr.DataArray(
         np.stack(
             [
-                model.eval(x=x, amplitude=1, center=0, sigma=0.05 * 5),
-                model.eval(x=x, amplitude=1, center=0, sigma=0.1 * 5),
-                model.eval(x=x, amplitude=1, center=0, sigma=0.15 * 5),
-                model.eval(x=x, amplitude=1, center=0, sigma=0.2 * 5),
-                model.eval(x=x, amplitude=1, center=0, sigma=0.25 * 5),
-                model.eval(x=x, amplitude=1, center=0, sigma=0.3 * 5),
-                model.eval(x=x, amplitude=1, center=0, sigma=0.35 * 5),
+                model.eval(x=x, amplitude=1, center=-5, sigma=0.05 * 5)
+                + model.eval(x=x, amplitude=1, center=5, sigma=0.05 * 5),
+                model.eval(x=x, amplitude=1, center=-5, sigma=0.1 * 5)
+                + model.eval(x=x, amplitude=1, center=5, sigma=0.1 * 5),
+                model.eval(x=x, amplitude=1, center=-5, sigma=0.15 * 5)
+                + model.eval(x=x, amplitude=1, center=5, sigma=0.15 * 5),
+                model.eval(x=x, amplitude=1, center=-5, sigma=0.2 * 5)
+                + model.eval(x=x, amplitude=1, center=5, sigma=0.2 * 5),
+                model.eval(x=x, amplitude=1, center=-5, sigma=0.25 * 5)
+                + model.eval(x=x, amplitude=1, center=5, sigma=0.25 * 5),
+                model.eval(x=x, amplitude=1, center=-5, sigma=0.3 * 5)
+                + model.eval(x=x, amplitude=1, center=5, sigma=0.3 * 5),
+                model.eval(x=x, amplitude=1, center=-5, sigma=0.35 * 5)
+                + model.eval(x=x, amplitude=1, center=5, sigma=0.35 * 5),
             ]
         ).T
         + rng.normal(size=(x.size, y.size)) * 0.01,
