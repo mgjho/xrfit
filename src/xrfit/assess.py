@@ -27,12 +27,19 @@ class AccessAccessor(DataArrayAccessor):
             "message",
         ] = "rsquared",
     ) -> xr.DataArray:
+        def get_attr_safe(x, attr_name):
+            try:
+                return getattr(x, attr_name)
+            except AttributeError:
+                return np.nan
+
         return xr.apply_ufunc(
-            lambda x: getattr(x, attr_name),
+            get_attr_safe,
             self._obj,
+            input_core_dims=[[]],
+            kwargs={"attr_name": attr_name},
             vectorize=True,
             dask="parallelized",
-            # output_dtypes=[object],
         )
 
     def best_fit_stat(
