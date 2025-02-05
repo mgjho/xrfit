@@ -1,3 +1,9 @@
+## Unreleased
+
+### ✨ Features
+
+- add visualization of fit stat to DisplayAccessor (#17)
+
 ## v0.5.0 (2025-02-05)
 
 ### ✨ Features
