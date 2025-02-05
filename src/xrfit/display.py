@@ -15,6 +15,9 @@ class MainWindow(QtWidgets.QWidget):
     def __init__(self, xarr) -> None:
         super().__init__()
         self._obj = xarr
+        self.fit_stat = "rsquared"
+        self.goodness_threshold_lower = 0.8
+        self.goodness_threshold_upper = 1.5
         self.setWindowTitle("Display Manager")
 
         layout = QtWidgets.QVBoxLayout()
@@ -62,6 +65,51 @@ class MainWindow(QtWidgets.QWidget):
             layout.addWidget(slider_label)
             layout.addWidget(slider)
 
+        # Add dropdown for fit_stat
+        self.fit_stat_dropdown = QtWidgets.QComboBox()
+        self.fit_stat_dropdown.addItems(
+            [
+                "aic",
+                "bic",
+                "chisqr",
+                "ci_out",
+                "redchi",
+                "rsquared",
+                "success",
+                "aborted",
+                "ndata",
+                "nfev",
+                "nfree",
+                "nvarys",
+                "ier",
+                "message",
+            ]
+        )
+        self.fit_stat_dropdown.setCurrentText(self.fit_stat)
+        self.fit_stat_dropdown.currentTextChanged.connect(self.update_fit_stat_label)
+        layout.addWidget(QtWidgets.QLabel("Fit Statistic:"))
+        layout.addWidget(self.fit_stat_dropdown)
+
+        # Add a label to display the current fit_stat value
+        self.fit_stat_label = QtWidgets.QLabel("Current Fit Stat: N/A")
+        layout.addWidget(self.fit_stat_label)
+
+        # Add a button to apply the input values
+        self.apply_button = QtWidgets.QPushButton("Apply")
+        self.apply_button.clicked.connect(self.apply_inputs)
+        layout.addWidget(self.apply_button)
+        # Add input fields for goodness_threshold_lower and goodness_threshold_upper
+        self.goodness_threshold_lower_input = QtWidgets.QLineEdit(
+            str(self.goodness_threshold_lower)
+        )
+        self.goodness_threshold_upper_input = QtWidgets.QLineEdit(
+            str(self.goodness_threshold_upper)
+        )
+        layout.addWidget(QtWidgets.QLabel("Goodness Threshold Lower:"))
+        layout.addWidget(self.goodness_threshold_lower_input)
+        layout.addWidget(QtWidgets.QLabel("Goodness Threshold Upper:"))
+        layout.addWidget(self.goodness_threshold_upper_input)
+
     def toggle_ylim(self, checked):
         if checked:
             y_range = self.plot.viewRange()[1]
@@ -82,6 +130,45 @@ class MainWindow(QtWidgets.QWidget):
         self.curve.setData(self._obj[index].item().best_fit)
         self.init_curve.setData(self._obj[index].item().init_fit)
         self.data_curve.setData(self._obj[index].item().data)
+
+        self.update_slider_label_color(index)
+        self.update_fit_stat_label(index)
+
+    def update_slider_label_color(self, index):
+        fit_stat = self._obj.assess.fit_stats(self.fit_stat)
+        goodness_of_fit = fit_stat[index].item()
+        for _, label in enumerate(self.slider_labels):
+            if isinstance(goodness_of_fit, float):
+                if (
+                    self.goodness_threshold_lower
+                    <= goodness_of_fit
+                    <= self.goodness_threshold_upper
+                ):
+                    label.setStyleSheet("color: green;")
+                else:
+                    label.setStyleSheet("color: red;")
+
+    def update_fit_stat_label(self, index=None):
+        self.fit_stat = self.fit_stat_dropdown.currentText()
+        if index is None:
+            index = tuple(self.slider_values)
+        fit_stat = self._obj.assess.fit_stats(self.fit_stat)
+        try:
+            current_fit_stat = fit_stat[index].item()
+            self.fit_stat_label.setText(f"Current Fit Stat: {current_fit_stat}")
+        except KeyError:
+            self.fit_stat_label.setText("Current Fit Stat: N/A")
+
+    def apply_inputs(self):
+        self.fit_stat = self.fit_stat_dropdown.currentText()
+        self.goodness_threshold_lower = float(
+            self.goodness_threshold_lower_input.text()
+        )
+        self.goodness_threshold_upper = float(
+            self.goodness_threshold_upper_input.text()
+        )
+        self.update_slider_label_color(tuple(self.slider_values))
+        self.update_fit_stat_label(tuple(self.slider_values))
 
 
 @xr.register_dataarray_accessor("display")
