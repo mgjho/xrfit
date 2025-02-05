@@ -4,7 +4,30 @@ import xarray as xr
 from lmfit.models import LorentzianModel
 
 
-def get_test_data():
+def get_test_data_2d():
+    rng = np.random.default_rng(seed=0)
+    x = np.linspace(-10, 10, 200)
+    y = np.linspace(-5, 5, 7)
+    model = LorentzianModel()
+    return xr.DataArray(
+        np.stack(
+            [
+                model.eval(x=x, amplitude=1, center=0, sigma=0.05 * 5),
+                model.eval(x=x, amplitude=1, center=0, sigma=0.1 * 5),
+                model.eval(x=x, amplitude=1, center=0, sigma=0.15 * 5),
+                model.eval(x=x, amplitude=1, center=0, sigma=0.2 * 5),
+                model.eval(x=x, amplitude=1, center=0, sigma=0.25 * 5),
+                model.eval(x=x, amplitude=1, center=0, sigma=0.3 * 5),
+                model.eval(x=x, amplitude=1, center=0, sigma=0.35 * 5),
+            ]
+        ).T
+        + rng.normal(size=(x.size, y.size)) * 0.01,
+        coords={"x": x, "y": y},
+        dims=("x", "y"),
+    )
+
+
+def get_test_data_3d():
     rng = np.random.default_rng(seed=0)
     x = np.linspace(-10, 10, 200)
     y = np.linspace(-5, 5, 2)
@@ -33,8 +56,7 @@ def get_test_data():
     )
 
 
-def get_test_result():
-    data = get_test_data()
+def get_test_result(data):
     model = LorentzianModel()
     guess = data.fit.guess(model=model)
     return data.fit(model=model, params=guess)
@@ -93,9 +115,9 @@ def test_fit(qtbot):
     data = xr.DataArray(
         np.stack(
             [
-                model.eval(x=x, amplitude=1, center=0, sigma=0.1),
-                model.eval(x=x, amplitude=1, center=0, sigma=0.2),
-                model.eval(x=x, amplitude=1, center=0, sigma=0.3),
+                model.eval(x=x, amplitude=1, center=0, sigma=0.1 * 5),
+                model.eval(x=x, amplitude=1, center=0, sigma=0.2 * 5),
+                model.eval(x=x, amplitude=1, center=0, sigma=0.3 * 5),
             ]
         ).T
         + rng.normal(size=(x.size, y.size)) * 0.01,
