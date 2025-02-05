@@ -1,7 +1,8 @@
-## Unreleased
+## v0.6.0 (2025-02-05)
 
 ### ✨ Features
 
+- add ArrAccessor for getting fit_arr values (#18)
 - add visualization of fit stat to DisplayAccessor (#17)
 
 ## v0.5.0 (2025-02-05)

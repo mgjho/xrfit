@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "xrfit"
-version = "0.5.0"
+version = "0.6.0"
 authors = [{ name = "Mingi Jho", email = "mingi.jho@kaist.ac.kr" }]
 description = "xrfit"
 readme = "README.md"
