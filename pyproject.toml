@@ -45,6 +45,7 @@ dev = [
     "ruff>=0.6.3",
     "pytest-qt>=4.4.0",
     "ipykernel>=6.29.5",
+    "matplotlib>=3.10.0",
 ]
 pyqt6 = ["pyqt6>=6.8.0"]
 
