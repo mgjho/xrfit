@@ -42,6 +42,12 @@ class MainWindow(QtWidgets.QWidget):
             pen=None,
             symbolBrush="k",
         )
+
+        # Add the checkbox for fixing/unfixing the y-axis limits
+        self.fix_ylim_checkbox = QtWidgets.QCheckBox("Fix Y-Axis Limits")
+        self.fix_ylim_checkbox.toggled.connect(self.toggle_ylim)
+        layout.addWidget(self.fix_ylim_checkbox)
+
         self.sliders = []
         self.slider_values = []
 
@@ -55,6 +61,16 @@ class MainWindow(QtWidgets.QWidget):
             self.slider_values.append(0)
             layout.addWidget(label)
             layout.addWidget(slider)
+
+    def toggle_ylim(self, checked):
+        if checked:
+            # When checked, capture the current y-axis limits and disable auto-ranging.
+            y_range = self.plot.viewRange()[1]  # [ymin, ymax]
+            self.plot.enableAutoRange("y", False)
+            self.plot.setYRange(y_range[0], y_range[1])
+        else:
+            # When unchecked, re-enable auto-ranging.
+            self.plot.enableAutoRange("y", True)
 
     def update_plot(self, value):
         sender = self.sender()
