@@ -159,7 +159,11 @@ class FitAccessor(DataArrayAccessor):
         xr.DataArray
             The result of the model fitting with correlated parameters.
         """
-        fit_results = self.__call__(model=model, input_core_dims=input_core_dims)
+        fit_results = self.__call__(
+            model=model,
+            input_core_dims=input_core_dims,
+            **kws,
+        )
         dims = fit_results.dims
         if start_dict is None:
             start_dict = fit_results.assess.best_fit_stat()
@@ -175,7 +179,7 @@ class FitAccessor(DataArrayAccessor):
             indices = np.unravel_index(idx, dims_tuple)
             index_dict = dict(zip(dims, indices, strict=False))
             single_fit_result = fit_results.isel(index_dict).item()
-            single_fit_result.fit(params=previous_params)
+            single_fit_result.fit(params=previous_params, **kws)
             fit_results[index_dict] = single_fit_result
             previous_params = single_fit_result.params
 
@@ -185,7 +189,7 @@ class FitAccessor(DataArrayAccessor):
             indices = np.unravel_index(idx, dims_tuple)
             index_dict = dict(zip(dims, indices, strict=False))
             single_fit_result = fit_results.isel(index_dict).item()
-            single_fit_result.fit(params=previous_params)
+            single_fit_result.fit(params=previous_params, **kws)
             fit_results[index_dict] = single_fit_result
             previous_params = single_fit_result.params
 
