@@ -175,6 +175,3 @@ check_untyped_defs = false
 exclude = ['^docs/', '^tests/']
 disable_error_code = ['import-untyped', 'import-not-found']
 pretty = true
-
-[tool.uv.workspace]
-members = ["xrfit"]
