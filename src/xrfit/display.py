@@ -2,6 +2,8 @@ import sys
 
 import pyqtgraph as pg
 import xarray as xr
+
+# from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
 from qtpy import QtCore, QtWidgets
 
 from xrfit.base import DataArrayAccessor
@@ -51,11 +53,22 @@ class MainWindow(QtWidgets.QWidget):
         )
 
         self.component_curves = []
-        for component_name in self._obj[initial_index].item().eval_components():
+        colors = [
+            "orange",
+            "purple",
+            "brown",
+            "pink",
+            "gray",
+            "cyan",
+            "magenta",
+        ]
+        for i, component_name in enumerate(
+            self._obj[initial_index].item().eval_components()
+        ):
             component_curve = self.plot.plot(
                 x=x,
                 y=self._obj[initial_index].item().eval_components()[component_name],
-                pen=pg.mkPen("orange", width=2, style=QtCore.Qt.PenStyle.DashLine),
+                pen=pg.mkPen(colors[i], width=2, style=QtCore.Qt.PenStyle.DashLine),
                 name=component_name,
             )
             self.component_curves.append(component_curve)
