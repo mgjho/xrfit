@@ -2,6 +2,9 @@
 
 ### ✨ Features
 
+- improve parameter and component visualization (#22)
+- add distinguishable colors to components plot
+feat: add parameter status label
 - add tolerance to parameter value checks in DisplayAccessor
 - add parameter display for DisplayAccessor (#21)
 
