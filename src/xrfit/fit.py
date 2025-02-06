@@ -151,6 +151,7 @@ class FitAccessor(DataArrayAccessor):
     def fit_with_corr(
         self,
         model: lf.model.Model,
+        params: xr.DataArray | None = None,
         input_core_dims: str = "x",
         start_dict: dict | None = None,
         **kws,
@@ -174,6 +175,7 @@ class FitAccessor(DataArrayAccessor):
         """
         fit_results = self.__call__(
             model=model,
+            params=params,
             input_core_dims=input_core_dims,
             **kws,
         )
