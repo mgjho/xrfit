@@ -1,5 +1,9 @@
 ## Unreleased
 
+### ✨ Features
+
+- add parameter display for DisplayAccessor (#21)
+
 ## v0.7.0 (2025-02-05)
 
 ### ✨ Features
