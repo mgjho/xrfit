@@ -190,7 +190,7 @@ class FitAccessor(DataArrayAccessor):
         total_idx = np.prod(dims_tuple)
         previous_params = fit_results.params.__call__().isel(start_dict).item()
 
-        for idx in range(start_idx - 1, -1, -1):
+        for idx in range(start_idx, -1, -1):
             indices = np.unravel_index(idx, dims_tuple)
             index_dict = dict(zip(dims, indices, strict=False))
             single_fit_result = fit_results.isel(index_dict).item()
