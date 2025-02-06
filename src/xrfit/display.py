@@ -20,11 +20,14 @@ class MainWindow(QtWidgets.QWidget):
         self.goodness_threshold_upper = 1.5
         self.setWindowTitle("Display Manager")
 
-        layout = QtWidgets.QVBoxLayout()
-        self.setLayout(layout)
+        main_layout = QtWidgets.QHBoxLayout()
+        self.setLayout(main_layout)
+
+        left_layout = QtWidgets.QVBoxLayout()
+        main_layout.addLayout(left_layout)
 
         self.win = pg.GraphicsLayoutWidget()
-        layout.addWidget(self.win)
+        left_layout.addWidget(self.win)
         self.plot = self.win.addPlot(title="Fitting Result")
         initial_index = tuple([0] * (self._obj.ndim))
         x = self._obj[initial_index].item().userkws["x"]
@@ -46,7 +49,6 @@ class MainWindow(QtWidgets.QWidget):
             pen=pg.mkPen("r", width=4),
         )
 
-        # Add individual component plots
         self.component_curves = []
         for component_name in self._obj[initial_index].item().eval_components():
             component_curve = self.plot.plot(
@@ -59,7 +61,7 @@ class MainWindow(QtWidgets.QWidget):
 
         self.fix_ylim_checkbox = QtWidgets.QCheckBox("Fix Y-Axis Limits")
         self.fix_ylim_checkbox.toggled.connect(self.toggle_ylim)
-        layout.addWidget(self.fix_ylim_checkbox)
+        left_layout.addWidget(self.fix_ylim_checkbox)
 
         self.sliders = []
         self.slider_values = []
@@ -74,8 +76,8 @@ class MainWindow(QtWidgets.QWidget):
             self.sliders.append(slider)
             self.slider_values.append(0)
             self.slider_labels.append(slider_label)
-            layout.addWidget(slider_label)
-            layout.addWidget(slider)
+            left_layout.addWidget(slider_label)
+            left_layout.addWidget(slider)
 
         # Add dropdown for fit_stat
         self.fit_stat_dropdown = QtWidgets.QComboBox()
@@ -99,17 +101,17 @@ class MainWindow(QtWidgets.QWidget):
         )
         self.fit_stat_dropdown.setCurrentText(self.fit_stat)
         self.fit_stat_dropdown.currentTextChanged.connect(self.update_fit_stat_label)
-        layout.addWidget(QtWidgets.QLabel("Fit Statistic:"))
-        layout.addWidget(self.fit_stat_dropdown)
+        left_layout.addWidget(QtWidgets.QLabel("Fit Statistic:"))
+        left_layout.addWidget(self.fit_stat_dropdown)
 
         # Add a label to display the current fit_stat value
         self.fit_stat_label = QtWidgets.QLabel("Current Fit Stat: N/A")
-        layout.addWidget(self.fit_stat_label)
+        left_layout.addWidget(self.fit_stat_label)
 
         # Add a button to apply the input values
         self.apply_button = QtWidgets.QPushButton("Apply")
         self.apply_button.clicked.connect(self.apply_inputs)
-        layout.addWidget(self.apply_button)
+        left_layout.addWidget(self.apply_button)
         # Add input fields for goodness_threshold_lower and goodness_threshold_upper
         self.goodness_threshold_lower_input = QtWidgets.QLineEdit(
             str(self.goodness_threshold_lower)
@@ -117,10 +119,39 @@ class MainWindow(QtWidgets.QWidget):
         self.goodness_threshold_upper_input = QtWidgets.QLineEdit(
             str(self.goodness_threshold_upper)
         )
-        layout.addWidget(QtWidgets.QLabel("Goodness Threshold Lower:"))
-        layout.addWidget(self.goodness_threshold_lower_input)
-        layout.addWidget(QtWidgets.QLabel("Goodness Threshold Upper:"))
-        layout.addWidget(self.goodness_threshold_upper_input)
+        left_layout.addWidget(QtWidgets.QLabel("Goodness Threshold Lower:"))
+        left_layout.addWidget(self.goodness_threshold_lower_input)
+        left_layout.addWidget(QtWidgets.QLabel("Goodness Threshold Upper:"))
+        left_layout.addWidget(self.goodness_threshold_upper_input)
+
+        # Add parameter values at the right of the main window
+        right_layout = QtWidgets.QVBoxLayout()
+        main_layout.addLayout(right_layout)
+
+        self.param_labels = []
+        for param_name, param in self._obj[initial_index].item().params.items():
+            color = "green" if param.min < param.value < param.max else "red"
+            param_label = QtWidgets.QLabel(
+                f"<b style='color:{color}'>{param_name}</b><br>Value: {param.value:.3f}<br>Min: {param.min:.3f}<br>Max: {param.max:.3f}<br>"
+            )
+            self.param_labels.append(param_label)
+            right_layout.addWidget(param_label)
+
+        # Add a scroll area for the parameter values
+        scroll_area = QtWidgets.QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setVerticalScrollBarPolicy(
+            QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOn
+        )
+        scroll_area.setHorizontalScrollBarPolicy(
+            QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+        scroll_content = QtWidgets.QWidget()
+        scroll_layout = QtWidgets.QVBoxLayout(scroll_content)
+        for label in self.param_labels:
+            scroll_layout.addWidget(label)
+        scroll_area.setWidget(scroll_content)
+        right_layout.addWidget(scroll_area)
 
     def toggle_ylim(self, checked):
         if checked:
@@ -149,6 +180,15 @@ class MainWindow(QtWidgets.QWidget):
             self.component_curves, components.keys(), strict=False
         ):
             component_curve.setData(components[component_name])
+
+        # Update parameter labels
+        for param_label, (param_name, param) in zip(
+            self.param_labels, self._obj[index].item().params.items(), strict=False
+        ):
+            color = "green" if param.min < param.value < param.max else "red"
+            param_label.setText(
+                f"<b style='color:{color}'>{param_name}</b><br>Value: {param.value:.3f}<br>Min: {param.min:.3f}<br>Max: {param.max:.3f}<br><br>"
+            )
 
         self.update_slider_label_color(index)
         self.update_fit_stat_label(index)
