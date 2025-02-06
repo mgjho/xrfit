@@ -18,6 +18,7 @@ class MainWindow(QtWidgets.QWidget):
         self.fit_stat = "rsquared"
         self.goodness_threshold_lower = 0.8
         self.goodness_threshold_upper = 1.5
+        self.tolerance = 1e-4
         self.setWindowTitle("Display Manager")
 
         main_layout = QtWidgets.QHBoxLayout()
@@ -130,7 +131,11 @@ class MainWindow(QtWidgets.QWidget):
 
         self.param_labels = []
         for param_name, param in self._obj[initial_index].item().params.items():
-            color = "green" if param.min < param.value < param.max else "red"
+            color = (
+                "green"
+                if param.min + self.tolerance < param.value < param.max - self.tolerance
+                else "red"
+            )
             param_label = QtWidgets.QLabel(
                 f"<b style='color:{color}'>{param_name}</b><br>Value: {param.value:.3f}<br>Min: {param.min:.3f}<br>Max: {param.max:.3f}<br>"
             )
@@ -185,7 +190,11 @@ class MainWindow(QtWidgets.QWidget):
         for param_label, (param_name, param) in zip(
             self.param_labels, self._obj[index].item().params.items(), strict=False
         ):
-            color = "green" if param.min < param.value < param.max else "red"
+            color = (
+                "green"
+                if param.min + self.tolerance < param.value < param.max - self.tolerance
+                else "red"
+            )
             param_label.setText(
                 f"<b style='color:{color}'>{param_name}</b><br>Value: {param.value:.3f}<br>Min: {param.min:.3f}<br>Max: {param.max:.3f}<br><br>"
             )
