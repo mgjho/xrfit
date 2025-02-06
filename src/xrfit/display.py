@@ -171,6 +171,11 @@ class MainWindow(QtWidgets.QWidget):
         scroll_area.setWidget(scroll_content)
         right_layout.addWidget(scroll_area)
 
+        # Add a label to indicate if all parameters are within bounds
+        self.param_status_label = QtWidgets.QLabel("All Parameters Within Bounds")
+        right_layout.addWidget(self.param_status_label)
+        self.update_param_status_label()
+
     def toggle_ylim(self, checked):
         if checked:
             y_range = self.plot.viewRange()[1]
@@ -214,6 +219,7 @@ class MainWindow(QtWidgets.QWidget):
 
         self.update_slider_label_color(index)
         self.update_fit_stat_label(index)
+        self.update_param_status_label()
 
     def update_slider_label_color(self, index):
         fit_stat = self._obj.assess.fit_stats(self.fit_stat)
@@ -240,6 +246,15 @@ class MainWindow(QtWidgets.QWidget):
         except KeyError:
             self.fit_stat_label.setText("Current Fit Stat: N/A")
 
+    def update_param_status_label(self):
+        all_within_bounds = all("green" in label.text() for label in self.param_labels)
+        if all_within_bounds:
+            self.param_status_label.setText("All Parameters Within Bounds ✅")
+            self.param_status_label.setStyleSheet("color: green;")
+        else:
+            self.param_status_label.setText("Some Parameters Out of Bounds ❌")
+            self.param_status_label.setStyleSheet("color: red;")
+
     def apply_inputs(self):
         self.fit_stat = self.fit_stat_dropdown.currentText()
         self.goodness_threshold_lower = float(
@@ -250,6 +265,7 @@ class MainWindow(QtWidgets.QWidget):
         )
         self.update_slider_label_color(tuple(self.slider_values))
         self.update_fit_stat_label(tuple(self.slider_values))
+        self.update_param_status_label()
 
 
 @xr.register_dataarray_accessor("display")
