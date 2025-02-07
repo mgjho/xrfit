@@ -48,29 +48,27 @@ def _set_bounds(
 @xr.register_dataarray_accessor("params")
 class ParamsAccessor(DataArrayAccessor):
     """
-    For manipulating and accessing parameters.
+    Handle Parameter of the DataArray.
 
     Methods
     -------
-    __call__() -> xr.DataArray
-        Applies a function to extract the 'params' attribute from the DataArray.
+    parse() -> xr.DataArray
+        Parses the parameters from the DataArray.
+
+    set_bounds(bound_ratio: float = 0.1) -> xr.DataArray
+        Sets the bounds for the parameters based on a given ratio.
 
     smoothen(param_name: str = "center", sigma: int = 5) -> xr.DataArray
-        Applies a Gaussian filter to smoothen the specified parameter.
+        Applies smoothing to the specified parameter.
 
     sort(target_param_name: str = "center", params_name: list | None = None) -> xr.DataArray
-        Sorts the DataArray based on the specified target parameter and updates the specified parameters.
+        Sorts the parameters based on the target parameter.
 
     get(params_name: str = "center", params_attr: str = "value") -> xr.DataArray
-        Retrieves the specified parameter attribute from the DataArray.
+        Retrieves the specified parameter.
 
-    set(params_value_new: xr.DataArray, params_name: str = "center") -> xr.DataArray
-        Sets the specified parameter in the DataArray to a new value.
-
-    Attributes
-    ----------
-    _obj : xr.DataArray
-        The xarray DataArray object to which this accessor is attached.
+    set(params_value_new: xr.DataArray, params_name: str = "center", params_attr: str = "value") -> xr.DataArray
+        Sets the specified parameter attribute to a new value.
     """
 
     def parse(
