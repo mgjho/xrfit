@@ -11,7 +11,7 @@ def _get(
     params_name: str = "center",
     params_attr: str = "value",
 ):
-    params = data.params.parse()
+    params = data.params
     return np.array(
         [
             getattr(params[key], params_attr)
@@ -27,7 +27,7 @@ def _set(
     params_name: str = "center",
     params_attr: str = "value",
 ):
-    params = data.params.parse()
+    params = data.params
     pars = [key for key in params if key.endswith(params_name)]
     for i, par in enumerate(pars):
         setattr(params[par], params_attr, params_value_new[i])
