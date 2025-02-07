@@ -2,6 +2,7 @@
 
 ### ✨ Features
 
+- add set_bound method for ParamsAccessor (#23)
 - improve parameter and component visualization (#22)
 - add distinguishable colors to components plot
 feat: add parameter status label
