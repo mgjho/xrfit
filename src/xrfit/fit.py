@@ -154,6 +154,7 @@ class FitAccessor(DataArrayAccessor):
         params: xr.DataArray | None = None,
         input_core_dims: str = "x",
         start_dict: dict | None = None,
+        bound_ratio: float | None = 0.1,
         **kws,
     ) -> xr.DataArray:
         """
@@ -188,7 +189,9 @@ class FitAccessor(DataArrayAccessor):
         dims_tuple = tuple(fit_results.sizes[dim] for dim in dims)
         start_idx = np.ravel_multi_index(start_tuple, dims_tuple)
         total_idx = np.prod(dims_tuple)
-        previous_params = fit_results.params.__call__().isel(start_dict).item()
+        if bound_ratio is not None:
+            fit_results = fit_results.params.set_bounds(bound_ratio=bound_ratio)
+        previous_params = fit_results.params.parse().isel(start_dict).item()
 
         for idx in range(start_idx, -1, -1):
             indices = np.unravel_index(idx, dims_tuple)
@@ -198,8 +201,7 @@ class FitAccessor(DataArrayAccessor):
             fit_results[index_dict] = single_fit_result
             previous_params = single_fit_result.params
 
-        previous_params = fit_results.params.__call__().isel(start_dict).item()
-
+        previous_params = fit_results.params.parse().isel(start_dict).item()
         for idx in range(start_idx + 1, total_idx):
             indices = np.unravel_index(idx, dims_tuple)
             index_dict = dict(zip(dims, indices, strict=False))
