@@ -2,6 +2,7 @@
 
 ### ✨ Features
 
+- enhance _set_bounds function to conditionally set parameter limits (#25)
 - add set_bound method for ParamsAccessor (#23)
 - improve parameter and component visualization (#22)
 - add distinguishable colors to components plot
