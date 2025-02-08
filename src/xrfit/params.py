@@ -39,9 +39,13 @@ def _set_bounds(
     bound_ratio: float = 0.1,
 ):
     for param_name, param_value in modelresult.params.items():
-        param_min = param_value - bound_ratio * abs(param_value)
-        param_max = param_value + bound_ratio * abs(param_value)
-        modelresult.params.get(param_name).set(min=param_min, max=param_max)
+        if param_value.vary:
+            param_min = param_value - bound_ratio * abs(param_value)
+            param_max = param_value + bound_ratio * abs(param_value)
+            if param_value.min <= param_value:
+                modelresult.params.get(param_name).set(min=param_min)
+            if param_value.max >= param_value:
+                modelresult.params.get(param_name).set(max=param_max)
     return modelresult
 
 
