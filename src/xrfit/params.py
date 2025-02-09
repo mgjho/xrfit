@@ -88,17 +88,23 @@ class ParamsAccessor(DataArrayAccessor):
 
     def set_bounds(
         self,
-        bound_ratio: float = 0.1,
+        bound_ratio: float = 1.0,
+        index_dict: dict | None = None,
     ) -> xr.DataArray:
-        return xr.apply_ufunc(
-            _set_bounds,
-            self._obj,
-            kwargs={
-                "bound_ratio": bound_ratio,
-            },
-            vectorize=True,
-            dask="parallelized",
-        )
+        if index_dict is None:
+            return xr.apply_ufunc(
+                _set_bounds,
+                self._obj,
+                kwargs={
+                    "bound_ratio": bound_ratio,
+                },
+                vectorize=True,
+                dask="parallelized",
+            )
+        item = self._obj.isel(index_dict).item()
+        index_dict = {k: self._obj.coords[k][v].item() for k, v in index_dict.items()}
+        self._obj.loc[index_dict] = _set_bounds(item, bound_ratio=bound_ratio)
+        return self._obj
 
     def smoothen(
         self,

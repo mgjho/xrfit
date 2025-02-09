@@ -186,8 +186,8 @@ class FitAccessor(DataArrayAccessor):
         dims_tuple = tuple(fit_results.sizes[dim] for dim in dims)
         start_idx = np.ravel_multi_index(start_tuple, dims_tuple)
         total_idx = np.prod(dims_tuple)
-        if bound_ratio is not None:
-            fit_results = fit_results.params.set_bounds(bound_ratio=bound_ratio)
+        # if bound_ratio is not None:
+        # fit_results = fit_results.params.set_bounds(bound_ratio=bound_ratio)
         previous_params = fit_results.params.parse().isel(start_dict).item()
 
         for idx in range(start_idx, -1, -1):
@@ -196,6 +196,9 @@ class FitAccessor(DataArrayAccessor):
             single_fit_result = fit_results.isel(index_dict).item()
             single_fit_result.fit(params=previous_params, **kws)
             fit_results[index_dict] = single_fit_result
+            fit_results.params.set_bounds(
+                bound_ratio=bound_ratio, index_dict=index_dict
+            )
             previous_params = single_fit_result.params
 
         previous_params = fit_results.params.parse().isel(start_dict).item()
@@ -205,6 +208,9 @@ class FitAccessor(DataArrayAccessor):
             single_fit_result = fit_results.isel(index_dict).item()
             single_fit_result.fit(params=previous_params, **kws)
             fit_results[index_dict] = single_fit_result
+            fit_results.params.set_bounds(
+                bound_ratio=bound_ratio, index_dict=index_dict
+            )
             previous_params = single_fit_result.params
 
         return fit_results
