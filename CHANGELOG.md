@@ -5,6 +5,11 @@
 - improve fit_with_corr to update bounds iteratively (#26)
 - add max option in start_dict kws for fit_with_corr method
 
+### 🐞 Bug Fixes
+
+- add bound_tol parameter to set_bounds for improved parameter limit handling (#27)
+- update data plotting to use x values
+
 ## v0.8.0 (2025-02-08)
 
 ### ✨ Features
