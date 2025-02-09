@@ -42,6 +42,30 @@ class AccessAccessor(DataArrayAccessor):
             dask="parallelized",
         )
 
+    def fit_max(
+        self,
+    ):
+        def get_fit_safe(x):
+            try:
+                return x.best_fit.max()
+            except AttributeError:
+                return np.nan
+
+        return xr.apply_ufunc(
+            get_fit_safe,
+            self._obj,
+            input_core_dims=[[]],
+            vectorize=True,
+            dask="parallelized",
+        )
+
+    def best_fit_max(
+        self,
+    ) -> dict:
+        darr = self.fit_max()
+        idx = np.unravel_index(darr.values.argmax(), darr.shape)
+        return dict(zip(darr.dims, idx, strict=False))
+
     def best_fit_stat(
         self,
         attr_name: Literal[
@@ -58,7 +82,3 @@ class AccessAccessor(DataArrayAccessor):
         if attr_name in ["rsquared"]:
             idx = np.unravel_index(darr.values.argmax(), darr.shape)
         return dict(zip(darr.dims, idx, strict=False))
-        # return {
-        #     dim: darr.coords[dim].values[i]
-        #     for dim, i in zip(darr.dims, idx, strict=False)
-        # }

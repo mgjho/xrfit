@@ -1,3 +1,5 @@
+from typing import Literal
+
 import lmfit as lf
 import numpy as np
 import xarray as xr
@@ -135,25 +137,12 @@ class FitAccessor(DataArrayAccessor):
             dask="parallelized",
         )
 
-    # def _get_attrs(
-    #     self,
-    #     fit_results: xr.DataArray,
-
-    # ):
-    #     return xr.apply_ufunc(
-    #         lambda x: x.,
-    #         fit_results,
-    #         vectorize=True,
-    #         dask="parallelized",
-    #         output_dtypes=[object],
-    #     )
-
     def fit_with_corr(
         self,
         model: lf.model.Model,
         params: xr.DataArray | None = None,
         input_core_dims: str = "x",
-        start_dict: dict | None = None,
+        start_dict: dict | Literal["stat", "max"] = "max",
         bound_ratio: float | None = 0.1,
         **kws,
     ) -> xr.DataArray:
@@ -181,16 +170,24 @@ class FitAccessor(DataArrayAccessor):
             **kws,
         )
         dims = fit_results.dims
-        if start_dict is None:
-            start_dict = fit_results.assess.best_fit_stat()
+        if not isinstance(start_dict, dict):
+            if start_dict == "stat":
+                start_dict = fit_results.assess.best_fit_stat()
+            elif start_dict == "max":
+                start_dict = fit_results.assess.best_fit_max()
+            else:
+                raise ValueError("Invalid value for start_dict.")
             print("⚡️ No initial coords provided for fit_with_corr")
             print("⚡️ Estimate used :", start_dict)
-        start_tuple = tuple(start_dict.values())
+        if isinstance(start_dict, dict):
+            start_tuple = tuple(start_dict.values())
+        else:
+            raise TypeError("start_dict must be a dictionary.")
         dims_tuple = tuple(fit_results.sizes[dim] for dim in dims)
         start_idx = np.ravel_multi_index(start_tuple, dims_tuple)
         total_idx = np.prod(dims_tuple)
-        if bound_ratio is not None:
-            fit_results = fit_results.params.set_bounds(bound_ratio=bound_ratio)
+        # if bound_ratio is not None:
+        # fit_results = fit_results.params.set_bounds(bound_ratio=bound_ratio)
         previous_params = fit_results.params.parse().isel(start_dict).item()
 
         for idx in range(start_idx, -1, -1):
@@ -199,6 +196,9 @@ class FitAccessor(DataArrayAccessor):
             single_fit_result = fit_results.isel(index_dict).item()
             single_fit_result.fit(params=previous_params, **kws)
             fit_results[index_dict] = single_fit_result
+            fit_results.params.set_bounds(
+                bound_ratio=bound_ratio, index_dict=index_dict
+            )
             previous_params = single_fit_result.params
 
         previous_params = fit_results.params.parse().isel(start_dict).item()
@@ -208,6 +208,9 @@ class FitAccessor(DataArrayAccessor):
             single_fit_result = fit_results.isel(index_dict).item()
             single_fit_result.fit(params=previous_params, **kws)
             fit_results[index_dict] = single_fit_result
+            fit_results.params.set_bounds(
+                bound_ratio=bound_ratio, index_dict=index_dict
+            )
             previous_params = single_fit_result.params
 
         return fit_results
