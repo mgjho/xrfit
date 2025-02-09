@@ -37,11 +37,15 @@ def _set(
 def _set_bounds(
     modelresult: lf.model.ModelResult,
     bound_ratio: float = 0.1,
+    bound_tol: float = 1e-3,
 ):
     for param_name, param_value in modelresult.params.items():
         if param_value.vary:
             param_min = param_value - bound_ratio * abs(param_value)
             param_max = param_value + bound_ratio * abs(param_value)
+            if np.abs(param_value) <= bound_tol:
+                param_min = -bound_tol
+                param_max = bound_tol
             if param_value.min <= param_value:
                 modelresult.params.get(param_name).set(min=param_min)
             if param_value.max >= param_value:
@@ -89,6 +93,7 @@ class ParamsAccessor(DataArrayAccessor):
     def set_bounds(
         self,
         bound_ratio: float = 1.0,
+        bound_tol: float = 1e-3,
         index_dict: dict | None = None,
     ) -> xr.DataArray:
         if index_dict is None:
@@ -103,7 +108,11 @@ class ParamsAccessor(DataArrayAccessor):
             )
         item = self._obj.isel(index_dict).item()
         index_dict = {k: self._obj.coords[k][v].item() for k, v in index_dict.items()}
-        self._obj.loc[index_dict] = _set_bounds(item, bound_ratio=bound_ratio)
+        self._obj.loc[index_dict] = _set_bounds(
+            item,
+            bound_ratio=bound_ratio,
+            bound_tol=bound_tol,
+        )
         return self._obj
 
     def smoothen(

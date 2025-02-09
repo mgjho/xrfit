@@ -144,6 +144,7 @@ class FitAccessor(DataArrayAccessor):
         input_core_dims: str = "x",
         start_dict: dict | Literal["stat", "max"] = "max",
         bound_ratio: float | None = 0.1,
+        bound_tol: float = 1e-3,
         **kws,
     ) -> xr.DataArray:
         """
@@ -197,7 +198,7 @@ class FitAccessor(DataArrayAccessor):
             single_fit_result.fit(params=previous_params, **kws)
             fit_results[index_dict] = single_fit_result
             fit_results.params.set_bounds(
-                bound_ratio=bound_ratio, index_dict=index_dict
+                bound_ratio=bound_ratio, bound_tol=bound_tol, index_dict=index_dict
             )
             previous_params = single_fit_result.params
 
@@ -209,7 +210,7 @@ class FitAccessor(DataArrayAccessor):
             single_fit_result.fit(params=previous_params, **kws)
             fit_results[index_dict] = single_fit_result
             fit_results.params.set_bounds(
-                bound_ratio=bound_ratio, index_dict=index_dict
+                bound_ratio=bound_ratio, bound_tol=bound_tol, index_dict=index_dict
             )
             previous_params = single_fit_result.params
 
