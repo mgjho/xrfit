@@ -1,3 +1,10 @@
+## Unreleased
+
+### ✨ Features
+
+- improve fit_with_corr to update bounds iteratively (#26)
+- add max option in start_dict kws for fit_with_corr method
+
 ## v0.8.0 (2025-02-08)
 
 ### ✨ Features
