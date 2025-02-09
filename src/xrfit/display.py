@@ -34,6 +34,7 @@ class MainWindow(QtWidgets.QWidget):
         self.plot = self.win.addPlot(title="Fitting Result")
         initial_index = tuple([0] * (self._obj.ndim))
         x = self._obj[initial_index].item().userkws["x"]
+        self.x_range = (x.min(), x.max())  # Store the x-axis range
         self.data_curve = self.plot.plot(
             x=x,
             y=self._obj[initial_index].item().data,
@@ -193,16 +194,20 @@ class MainWindow(QtWidgets.QWidget):
 
         index = tuple(self.slider_values)
 
-        self.curve.setData(self._obj[index].item().best_fit)
-        self.init_curve.setData(self._obj[index].item().init_fit)
-        self.data_curve.setData(self._obj[index].item().data)
+        x = self._obj[index].item().userkws["x"]  # Update x data
+        self.curve.setData(x, self._obj[index].item().best_fit)
+        self.init_curve.setData(x, self._obj[index].item().init_fit)
+        self.data_curve.setData(x, self._obj[index].item().data)
 
         # Update individual component plots
         components = self._obj[index].item().eval_components()
         for component_curve, component_name in zip(
             self.component_curves, components.keys(), strict=False
         ):
-            component_curve.setData(components[component_name])
+            component_curve.setData(x, components[component_name])
+
+        # Ensure the x-axis range remains visible
+        # self.plot.setXRange(*self.x_range)
 
         # Update parameter labels
         for param_label, (param_name, param) in zip(
