@@ -7,6 +7,7 @@
 
 ### 🐞 Bug Fixes
 
+- solve set method bound issue #28
 - add bound_tol parameter to set_bounds for improved parameter limit handling (#27)
 - update data plotting to use x values
 
