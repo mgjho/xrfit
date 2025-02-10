@@ -55,3 +55,9 @@ def test_fit_2d():
     smoothend_result = result.params.smoothen("center", 5)
     assert isinstance(smoothend_result, xr.DataArray)
     assert isinstance(smoothend_result[0].item(), lf.model.ModelResult)
+
+    center = result.params.get("p0center")
+    center[:] = 0.0
+    result.params.assign(center, "p0center")
+    center = result.params.get("p0center")
+    assert np.all(center == 0.0)

@@ -7,7 +7,7 @@ from xrfit.base import DataArrayAccessor
 
 
 def _get(
-    data: xr.DataArray,
+    data: lf.model.ModelResult,
     params_name: str = "center",
     params_attr: str = "value",
 ):
@@ -21,16 +21,16 @@ def _get(
     )
 
 
-def _set(
-    data: xr.DataArray,
+# TODO currently set value only.
+def _assign(
+    data: lf.model.ModelResult,
     params_value_new: xr.DataArray,
     params_name: str = "center",
-    params_attr: str = "value",
 ):
     params = data.params
     pars = [key for key in params if key.endswith(params_name)]
     for i, par in enumerate(pars):
-        setattr(params[par], params_attr, params_value_new[i])
+        data.params[par].set(value=params_value_new[i], min=-np.inf, max=np.inf)
     return data
 
 
@@ -126,7 +126,7 @@ class ParamsAccessor(DataArrayAccessor):
         ]
 
         param_smooth = gaussian_filter(param, sigma=smoothing_sigma)
-        self._obj.params.set(param_smooth, param_name)
+        self._obj.params.assign(param_smooth, param_name)
         return self._obj
 
     def sort(
@@ -141,7 +141,7 @@ class ParamsAccessor(DataArrayAccessor):
         for param_name in params_name:
             param = self._obj.params.get(param_name)
             sorted_param = param.isel(params_dim=sorted_indices)
-            self._obj.params.set(sorted_param, param_name)
+            self._obj.params.assign(sorted_param, param_name)
         return self._obj
 
     def get(
@@ -161,19 +161,19 @@ class ParamsAccessor(DataArrayAccessor):
             vectorize=True,
         )
 
-    def set(
+    def assign(
         self,
         params_value_new: xr.DataArray,
         params_name: str = "center",
-        params_attr: str = "value",
+        # params_attr: str = "value",
     ) -> xr.DataArray:
         return xr.apply_ufunc(
-            _set,
+            _assign,
             self._obj,
             params_value_new,
             kwargs={
                 "params_name": params_name,
-                "params_attr": params_attr,
+                # "params_attr": params_attr,
             },
             input_core_dims=[[], ["params_dim"]],
             vectorize=True,
