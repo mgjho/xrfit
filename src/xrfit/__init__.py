@@ -10,4 +10,5 @@ __all__ = [
     "DisplayAccessor",
     "FitAccessor",
     "ParamsAccessor",
+    "display",
 ]
