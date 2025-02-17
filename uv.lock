@@ -1091,6 +1091,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pyopengl"
+version = "3.1.9"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c0/42/71080db298df3ddb7e3090bfea8fd7c300894d8b10954c22f8719bd434eb/pyopengl-3.1.9.tar.gz", hash = "sha256:28ebd82c5f4491a418aeca9672dffb3adbe7d33b39eada4548a5b4e8c03f60c8", size = 1913642 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/92/44/8634af40b0db528b5b37e901c0dc67321354880d251bf8965901d57693a5/PyOpenGL-3.1.9-py3-none-any.whl", hash = "sha256:15995fd3b0deb991376805da36137a4ae5aba6ddbb5e29ac1f35462d130a3f77", size = 3190341 },
+]
+
+[[package]]
 name = "pyparsing"
 version = "3.2.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1601,12 +1610,13 @@ wheels = [
 
 [[package]]
 name = "xrfit"
-version = "0.8.0"
+version = "0.9.0"
 source = { editable = "." }
 dependencies = [
     { name = "lmfit" },
     { name = "lxml" },
     { name = "numpy" },
+    { name = "pyopengl" },
     { name = "pyqt6" },
     { name = "pyqtgraph" },
     { name = "pytest" },
@@ -1639,6 +1649,7 @@ requires-dist = [
     { name = "lmfit", specifier = ">=1.3.2" },
     { name = "lxml", specifier = ">=5.3.0" },
     { name = "numpy", specifier = ">=1.3.2" },
+    { name = "pyopengl", specifier = ">=3.1.9" },
     { name = "pyqt6", specifier = ">=6.8.0" },
     { name = "pyqtgraph", specifier = ">=0.13.7" },
     { name = "pytest", specifier = ">=8.3.4" },
