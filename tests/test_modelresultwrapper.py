@@ -1,5 +1,7 @@
 import numpy as np
+import pytest
 from lmfit.models import LorentzianModel
+from qtpy import QtWidgets
 
 import xrfit
 
@@ -12,15 +14,34 @@ def get_data_vars():
     x = x[0] + 1j * x[1]
     x = x.flatten()
     model = LorentzianModel()
-
     params = model.make_params(center=0.1, amplitude=1, sigma=0.1)
     data = model.eval(params, x=x)
     data += 1.0 * rng.standard_normal(data.shape)
-
     return data, x, model, params
 
 
-def test_modelresult_wrapper():
+@pytest.fixture
+def app(qtbot):
+    app = QtWidgets.QApplication.instance()
+    if app is None:
+        app = QtWidgets.QApplication([])
+    return app
+
+
+def test_modelresult_wrapper(qtbot, app):
     data, x, model, params = get_data_vars()
     modelresult = model.fit(data, params, x=x)
-    xrfit.ModelResultWrapper(modelresult).display()
+
+    # Create and show the window
+    window = xrfit.ModelResultWrapper(modelresult)
+
+    # Add window to qtbot, so it's managed during the test
+    qtbot.addWidget(window)
+    window.gen_plot_fit()
+    window.show()
+
+    # Wait for the window to be exposed
+    qtbot.waitExposed(window)
+
+    # Close the window automatically after a short wait using QTimer
+    qtbot.wait(2000)  # Wait a bit longer to ensure the window closes
