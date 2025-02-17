@@ -1,9 +1,7 @@
 import numpy as np
 from lmfit.models import LorentzianModel
 
-from xrfit.modelresult import ModelResultWrapper
-
-# from xrfit
+import xrfit
 
 
 def get_data_vars():
@@ -17,7 +15,7 @@ def get_data_vars():
 
     params = model.make_params(center=0.1, amplitude=1, sigma=0.1)
     data = model.eval(params, x=x)
-    data += 0.01 * rng.standard_normal(data.shape)
+    data += 1.0 * rng.standard_normal(data.shape)
 
     return data, x, model, params
 
@@ -25,11 +23,4 @@ def get_data_vars():
 def test_modelresult_wrapper():
     data, x, model, params = get_data_vars()
     modelresult = model.fit(data, params, x=x)
-    wrapper = ModelResultWrapper(modelresult)
-    wrapper.display()
-    # modelresult.plot_fit()
-    # result = data_xarr.fit(model=model, params=params)
-    # assert isinstance(result, xr.DataArrat)
-    # result = model.fit(data, params, x=x)
-
-    # assert result.success
+    xrfit.ModelResultWrapper(modelresult).display()
