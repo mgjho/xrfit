@@ -1,26 +1,22 @@
 import sys
 
 import numpy as np
-
-# import pyqtgraph as pg
 import pyqtgraph.opengl as gl
 from qtpy import QtWidgets
 
 
-class MainWindow(gl.GLViewWidget):
+class ModelResultWrapper(gl.GLViewWidget):
     def __init__(self, xarr) -> None:
         super().__init__()
         self._obj = xarr
-        self.setWindowTitle("3D Display Manager")
-        self.setCameraPosition(distance=20)
-        # Set Grid
 
+    def gen_plot_fit(self):
+        self.setWindowTitle("3D Display Manager")
+        # self.setCameraPosition(distance=20)
         # Set Background Color
         self.setBackgroundColor((0, 0, 0, 1))  # Black background for contrast
-
         # Add Grid
-        g = gl.GLGridItem()
-        self.addItem(g)
+        self.addItem(gl.GLGridItem())
 
         # Add Axis
         self.add_axes()
@@ -44,6 +40,7 @@ class MainWindow(gl.GLViewWidget):
             scatter_points = gl.GLScatterPlotItem(pos=pos, color=color, size=10.0)
             self.addItem(scatter_points)
             self.update()
+        return self
 
     def add_axes(self):
         """Add X, Y, Z axes to the plot."""
@@ -64,18 +61,13 @@ class MainWindow(gl.GLViewWidget):
         z_line = gl.GLLinePlotItem(pos=z_axis, color=(0, 0, 1, 1), width=2)  # Blue
         self.addItem(z_line)
 
-
-class ModelResultWrapper:
-    def __init__(self, modelresult):
-        self.modelresult = modelresult
-
     def display(self):
         if not QtWidgets.QApplication.instance():
             qapp = QtWidgets.QApplication(sys.argv)
         else:
             qapp = QtWidgets.QApplication.instance()
         qapp.setStyle("Fusion")
-        win = MainWindow(xarr=self.modelresult)
+        win = self.gen_plot_fit()
         win.show()
-        # win.activateWindow()
+        win.activateWindow()
         qapp.exec()
