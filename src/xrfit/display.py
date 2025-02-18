@@ -287,4 +287,4 @@ class DisplayAccessor(DataArrayAccessor):
         win = MainWindow(xarr=self._obj)
         win.show()
         win.activateWindow()
-        qapp.exec()
+        return win

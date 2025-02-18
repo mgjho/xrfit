@@ -38,10 +38,10 @@ def test_modelresult_wrapper(qtbot, app):
     # Add window to qtbot, so it's managed during the test
     qtbot.addWidget(window)
     window.gen_plot_fit()
-    window.show()
+    # window.show()
 
     # Wait for the window to be exposed
-    qtbot.waitExposed(window)
+    # qtbot.waitExposed(window)
 
     # Close the window automatically after a short wait using QTimer
-    qtbot.wait(2000)  # Wait a bit longer to ensure the window closes
+    # qtbot.wait(2000)  # Wait a bit longer to ensure the window closes

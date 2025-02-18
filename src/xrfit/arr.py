@@ -10,7 +10,12 @@ from xrfit.base import DataArrayAccessor
 
 def _get_arr(
     model_result: lf.model.ModelResult,
-    attr_name: Literal["best_fit", "init_fit", "residual", "data"] = "best_fit",
+    attr_name: Literal[
+        "best_fit",
+        "init_fit",
+        "residual",
+        "data",
+    ] = "best_fit",
 ) -> npt.NDArray[np.float64]:
     # since parameter value might have changed, we re-evaluate the model just in case
     best_fit = model_result.eval()
@@ -20,7 +25,7 @@ def _get_arr(
     if attr_name == "init_fit":
         return model_result.init_fit
     if attr_name == "residual":
-        return data.data - best_fit
+        return best_fit - data.data
     if attr_name == "data":
         return data
     raise ValueError(

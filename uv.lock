@@ -1639,6 +1639,9 @@ dev = [
 io = [
     { name = "dill" },
 ]
+pyqt6 = [
+    { name = "pyqt6" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -1666,3 +1669,4 @@ dev = [
     { name = "ruff", specifier = ">=0.6.3" },
 ]
 io = [{ name = "dill" }]
+pyqt6 = [{ name = "pyqt6", specifier = ">=6.8.0" }]
