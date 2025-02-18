@@ -46,7 +46,7 @@ dev = [
     "matplotlib>=3.10.0",
     "lxml>=5.3.0",
 ]
-
+pyqt6 = ["pyqt6>=6.8.0"]
 
 
 [project.urls]
