@@ -272,19 +272,26 @@ class MainWindow(QtWidgets.QWidget):
         self.update_fit_stat_label(tuple(self.slider_values))
         self.update_param_status_label()
 
+    def display(self, return_window: bool = False):
+        if not QtWidgets.QApplication.instance():
+            qapp = QtWidgets.QApplication(sys.argv)
+        else:
+            qapp = QtWidgets.QApplication.instance()  # type: ignore
+        qapp.setStyle("Fusion")
+
+        if return_window:
+            return self
+        self.show()
+        qapp.exec_()  # type: ignore
+        return None
+
 
 @xr.register_dataarray_accessor("display")
 class DisplayAccessor(DataArrayAccessor):
     def __init__(self, xarray_obj):
         super().__init__(xarray_obj)
 
-    def __call__(self):
-        if not QtWidgets.QApplication.instance():
-            qapp = QtWidgets.QApplication(sys.argv)
-        else:
-            qapp = QtWidgets.QApplication.instance()
-        qapp.setStyle("Fusion")
+    def __call__(self, return_window: bool = False):
         win = MainWindow(xarr=self._obj)
-        win.show()
-        win.activateWindow()
+        win.display(return_window=return_window)
         return win
