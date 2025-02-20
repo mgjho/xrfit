@@ -2,6 +2,7 @@
 
 ### ✨ Features
 
+- improve composite model handling for generalized guess method (#34)
 - add BinAccessor for binning (#31)
 - add 3d visualization of complex-variable fit (#30)
 
