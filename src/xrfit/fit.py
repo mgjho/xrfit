@@ -8,15 +8,32 @@ from xrfit.base import DataArrayAccessor
 
 
 def _generalized_guess(model, data, x):
+    """Recursively generates initial parameter guesses for lmfit models, including composite and convolved models."""
+    params = lf.Parameters()
+
+    # Handle CompositeModel
     if isinstance(model, lf.model.CompositeModel):
-        params = lf.Parameters()
         if model.left is not None:
-            params.update(_generalized_guess(model.left, data, x))
+            params.update(
+                _generalized_guess(model.left, data, x)
+            )  # Recursively call on left component
         if model.right is not None:
-            params.update(_generalized_guess(model.right, data, x))
+            params.update(
+                _generalized_guess(model.right, data, x)
+            )  # Recursively call on right component
         return params
+
+    # Handle ConvolutionModel
+    if hasattr(model, "model") and hasattr(model, "op"):
+        params.update(
+            _generalized_guess(model.model, data, x)
+        )  # Recursively call on convolved model
+        return params
+
+    # Handle models with a `guess` method
     if hasattr(model, "guess"):
-        return model.guess(data, x=x)
+        return model.guess(data, x=x)  # Call the guess method of the model
+
     raise ValueError(f"Model {model} does not support guess().")
 
 
