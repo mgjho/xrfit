@@ -13,13 +13,14 @@ class GaussianConvolveModel(lf.Model):
 
     def __init__(
         self,
-        independent_vars: list = ["x"],
+        independent_vars: str = "x",
         prefix: str = "",
         missing: str = "drop",
         name: None = None,
         sigma: float | None = None,
         **kwargs,
     ):
+        independent_vars = [independent_vars]
         """Defer to lmfit for initialization."""
         kwargs.update(
             {"prefix": prefix, "missing": missing, "independent_vars": independent_vars}
