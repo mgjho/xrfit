@@ -150,8 +150,9 @@ class MainWindow(QtWidgets.QWidget):
                 if param.min + self.tolerance < param.value < param.max - self.tolerance
                 else "red"
             )
+            expr = f"Expr: {param.expr}" if param.expr is not None else "Expr: None"
             param_label = QtWidgets.QLabel(
-                f"<b style='color:{color}'>{param_name}</b><br>Value: {param.value:.3f}<br>Min: {param.min:.3f}<br>Max: {param.max:.3f}<br>"
+                f"<b style='color:{color}'>{param_name}</b><br>Value: {param.value:.3f}<br>Min: {param.min:.3f}<br>Max: {param.max:.3f}<br>Vary: {param.vary}<br>{expr}<br>"
             )
             self.param_labels.append(param_label)
             right_layout.addWidget(param_label)
@@ -218,8 +219,9 @@ class MainWindow(QtWidgets.QWidget):
                 if param.min + self.tolerance < param.value < param.max - self.tolerance
                 else "red"
             )
+            expr = f"Expr: {param.expr}" if param.expr is not None else "Expr: None"
             param_label.setText(
-                f"<b style='color:{color}'>{param_name}</b><br>Value: {param.value:.3f}<br>Min: {param.min:.3f}<br>Max: {param.max:.3f}<br><br>"
+                f"<b style='color:{color}'>{param_name}</b><br>Value: {param.value:.3f}<br>Min: {param.min:.3f}<br>Max: {param.max:.3f}<br>Vary: {param.vary}<br>{expr}<br>"
             )
 
         self.update_slider_label_color(index)
@@ -272,26 +274,21 @@ class MainWindow(QtWidgets.QWidget):
         self.update_fit_stat_label(tuple(self.slider_values))
         self.update_param_status_label()
 
-    def display(self, return_window: bool = False):
-        if not QtWidgets.QApplication.instance():
-            qapp = QtWidgets.QApplication(sys.argv)
-        else:
-            qapp = QtWidgets.QApplication.instance()  # type: ignore
-        qapp.setStyle("Fusion")
-
-        if return_window:
-            return self
-        self.show()
-        qapp.exec_()  # type: ignore
-        return None
-
 
 @xr.register_dataarray_accessor("display")
 class DisplayAccessor(DataArrayAccessor):
     def __init__(self, xarray_obj):
         super().__init__(xarray_obj)
 
-    def __call__(self, return_window: bool = False):
+    def __call__(
+        self,
+    ):
+        if not QtWidgets.QApplication.instance():
+            qapp = QtWidgets.QApplication(sys.argv)
+        else:
+            qapp = QtWidgets.QApplication.instance()
+        qapp.setStyle("Fusion")
         win = MainWindow(xarr=self._obj)
-        win.display(return_window=return_window)
-        return win
+        win.show()
+        win.activateWindow()
+        qapp.exec()
