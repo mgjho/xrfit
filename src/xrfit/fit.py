@@ -162,6 +162,9 @@ class FitAccessor(DataArrayAccessor):
         start_dict: dict | Literal["stat", "max"] = "max",
         bound_ratio: float | None = 0.1,
         bound_tol: float = 1e-3,
+        iter_max: int = 30,
+        iter_crit: Literal["rsquared", "chisqr", "redchi"] = "rsquared",
+        iter_tol: float = 0.99,
         **kws,
     ) -> xr.DataArray:
         """
@@ -212,7 +215,10 @@ class FitAccessor(DataArrayAccessor):
             indices = np.unravel_index(idx, dims_tuple)
             index_dict = dict(zip(dims, indices, strict=False))
             single_fit_result = fit_results.isel(index_dict).item()
-            single_fit_result.fit(params=previous_params, **kws)
+            for _ in range(iter_max):
+                single_fit_result.fit(params=previous_params, **kws)
+                if getattr(single_fit_result, iter_crit) > iter_tol:
+                    break
             fit_results[index_dict] = single_fit_result
             fit_results.params.set_bounds(
                 bound_ratio=bound_ratio, bound_tol=bound_tol, index_dict=index_dict
@@ -224,7 +230,10 @@ class FitAccessor(DataArrayAccessor):
             indices = np.unravel_index(idx, dims_tuple)
             index_dict = dict(zip(dims, indices, strict=False))
             single_fit_result = fit_results.isel(index_dict).item()
-            single_fit_result.fit(params=previous_params, **kws)
+            for _ in range(iter_max):
+                single_fit_result.fit(params=previous_params, **kws)
+                if getattr(single_fit_result, iter_crit) > iter_tol:
+                    break
             fit_results[index_dict] = single_fit_result
             fit_results.params.set_bounds(
                 bound_ratio=bound_ratio, bound_tol=bound_tol, index_dict=index_dict
