@@ -6,6 +6,8 @@ import xarray as xr
 
 from xrfit.base import DataArrayAccessor
 
+# from xrfit.params import _set_bounds
+
 
 def _generalized_guess(model, data, x):
     """Recursively generates initial parameter guesses for lmfit models, including composite and convolved models."""
@@ -160,9 +162,10 @@ class FitAccessor(DataArrayAccessor):
         params: xr.DataArray | None = None,
         input_core_dims: str = "x",
         start_dict: dict | Literal["stat", "max"] = "max",
-        bound_ratio: float | None = 0.1,
+        bound_ratio: float = 0.1,
+        bound_ratio_inc: float = 0.1,
         bound_tol: float = 1e-3,
-        iter_max: int = 30,
+        iter_max: int = 20,
         iter_crit: Literal["rsquared", "chisqr", "redchi"] = "rsquared",
         iter_tol: float = 0.99,
         **kws,
@@ -215,29 +218,88 @@ class FitAccessor(DataArrayAccessor):
             indices = np.unravel_index(idx, dims_tuple)
             index_dict = dict(zip(dims, indices, strict=False))
             single_fit_result = fit_results.isel(index_dict).item()
-            for _ in range(iter_max):
+            for iter_idx in range(iter_max):
                 single_fit_result.fit(params=previous_params, **kws)
-                if getattr(single_fit_result, iter_crit) > iter_tol:
+                iter_crit_val = getattr(single_fit_result, iter_crit)
+                # single_fit_result = _set_bounds(
+                #     single_fit_result,
+                #     bound_ratio=bound_ratio + bound_ratio_inc * iter_idx,
+                #     bound_tol=bound_tol,
+                # )
+                fit_results[index_dict] = single_fit_result
+                fit_results.params.set_bounds(
+                    bound_ratio=bound_ratio + bound_ratio_inc * iter_idx,
+                    bound_tol=bound_tol,
+                    index_dict=index_dict,
+                )
+                previous_params = fit_results.params.parse().isel(index_dict).item()
+                # previous_params = fit_results[index_dict].params
+                print("iter_crit_val", iter_crit_val)
+                if iter_crit_val > iter_tol:
+                    print(
+                        "⚡️ iter_bound tol reached at iter : ",
+                        iter_idx,
+                        "iter_crit : ",
+                        iter_crit_val,
+                        "iter_tol : ",
+                        iter_tol,
+                    )
                     break
-            fit_results[index_dict] = single_fit_result
-            fit_results.params.set_bounds(
-                bound_ratio=bound_ratio, bound_tol=bound_tol, index_dict=index_dict
-            )
-            previous_params = single_fit_result.params
+                if iter_idx == iter_max - 1:
+                    print(
+                        "⚠️ iter_max reached at iter : ",
+                        iter_idx,
+                        "for idx : ",
+                        index_dict,
+                        "iter_crit : ",
+                        iter_crit_val,
+                        "iter_tol : ",
+                        iter_tol,
+                    )
 
         previous_params = fit_results.params.parse().isel(start_dict).item()
         for idx in range(start_idx + 1, total_idx):
             indices = np.unravel_index(idx, dims_tuple)
             index_dict = dict(zip(dims, indices, strict=False))
             single_fit_result = fit_results.isel(index_dict).item()
-            for _ in range(iter_max):
+            for iter_idx in range(iter_max):
                 single_fit_result.fit(params=previous_params, **kws)
-                if getattr(single_fit_result, iter_crit) > iter_tol:
+                # print(fit_results[index_dict])
+                fit_results[index_dict] = single_fit_result
+                # print(fit_results[index_dict])
+                fit_results.params.set_bounds(
+                    bound_ratio=bound_ratio + bound_ratio_inc * iter_idx,
+                    bound_tol=bound_tol,
+                    index_dict=index_dict,
+                )
+                print(
+                    "bound_ratio + bound_ratio_inc * iter_idx",
+                    bound_ratio + bound_ratio_inc * iter_idx,
+                )
+                print(fit_results.params.get("center", "max"))
+                # previous_params = single_fit_result.params
+                previous_params = fit_results.params.parse().isel(index_dict).item()
+                print("iter_idx", iter_idx)
+                print("iter_crit_val", iter_crit_val)
+                if iter_crit_val > iter_tol:
+                    print(
+                        "⚡️ iter_bound tol reached at iter : ",
+                        iter_idx,
+                        "iter_crit : ",
+                        iter_crit_val,
+                        "iter_tol : ",
+                        iter_tol,
+                    )
                     break
-            fit_results[index_dict] = single_fit_result
-            fit_results.params.set_bounds(
-                bound_ratio=bound_ratio, bound_tol=bound_tol, index_dict=index_dict
-            )
-            previous_params = single_fit_result.params
-
+                if iter_idx == iter_max - 1:
+                    print(
+                        "⚠️ iter_max reached at iter : ",
+                        iter_idx,
+                        "for idx : ",
+                        index_dict,
+                        "iter_crit : ",
+                        iter_crit_val,
+                        "iter_tol : ",
+                        iter_tol,
+                    )
         return fit_results
