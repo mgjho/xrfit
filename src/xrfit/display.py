@@ -1,19 +1,33 @@
-import sys
-
 import pyqtgraph as pg
 import xarray as xr
 
 # from pyqtgraph.graphicsItems.GradientEditorItem import Gradients
-from qtpy import QtCore, QtWidgets
+from qtpy import QtCore
+from qtpy.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QComboBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QScrollArea,
+    QSlider,
+    QVBoxLayout,
+    QWidget,
+)
 
+import xrfit
 from xrfit.base import DataArrayAccessor
 
 # os.environ["QT_API"] = "pyqt6"
 pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
 
+__all__ = ["xrfit"]
 
-class MainWindow(QtWidgets.QWidget):
+
+class MainWindow(QWidget):
     def __init__(self, xarr) -> None:
         super().__init__()
         self._obj = xarr
@@ -23,10 +37,10 @@ class MainWindow(QtWidgets.QWidget):
         self.tolerance = 1e-4
         self.setWindowTitle("Display Manager")
 
-        main_layout = QtWidgets.QHBoxLayout()
+        main_layout = QHBoxLayout()
         self.setLayout(main_layout)
 
-        left_layout = QtWidgets.QVBoxLayout()
+        left_layout = QVBoxLayout()
         main_layout.addLayout(left_layout)
 
         self.win = pg.GraphicsLayoutWidget()
@@ -35,7 +49,11 @@ class MainWindow(QtWidgets.QWidget):
         initial_index = tuple([0] * (self._obj.ndim))
         x = self._obj[initial_index].item().userkws["x"]
         self.x_range = (x.min(), x.max())  # Store the x-axis range
-        y_range = (xarr.min * 1.1, xarr.max * 1.1)
+        # print(xarr.get_arr())
+        y_range = (
+            xarr.get_arr("best_fit").min() * 1.1,
+            xarr.get_arr("best_fit").max() * 1.1,
+        )
         self.plot.setYRange(y_range[0], y_range[1])
         self.data_curve = self.plot.plot(
             x=x,
@@ -76,7 +94,7 @@ class MainWindow(QtWidgets.QWidget):
             )
             self.component_curves.append(component_curve)
 
-        self.fix_ylim_checkbox = QtWidgets.QCheckBox("Fix Y-Axis Limits")
+        self.fix_ylim_checkbox = QCheckBox("Fix Y-Axis Limits")
         self.fix_ylim_checkbox.toggled.connect(self.toggle_ylim)
         left_layout.addWidget(self.fix_ylim_checkbox)
 
@@ -85,8 +103,8 @@ class MainWindow(QtWidgets.QWidget):
         self.slider_labels = []
 
         for dim in range(self._obj.ndim):
-            slider_label = QtWidgets.QLabel(f"{self._obj.dims[dim]}: 0")
-            slider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
+            slider_label = QLabel(f"{self._obj.dims[dim]}: 0")
+            slider = QSlider(QtCore.Qt.Orientation.Horizontal)
             slider.setMinimum(0)
             slider.setMaximum(self._obj.shape[dim] - 1)
             slider.valueChanged.connect(self.update_plot)
@@ -97,7 +115,7 @@ class MainWindow(QtWidgets.QWidget):
             left_layout.addWidget(slider)
 
         # Add dropdown for fit_stat
-        self.fit_stat_dropdown = QtWidgets.QComboBox()
+        self.fit_stat_dropdown = QComboBox()
         self.fit_stat_dropdown.addItems(
             [
                 "aic",
@@ -118,31 +136,31 @@ class MainWindow(QtWidgets.QWidget):
         )
         self.fit_stat_dropdown.setCurrentText(self.fit_stat)
         self.fit_stat_dropdown.currentTextChanged.connect(self.update_fit_stat_label)
-        left_layout.addWidget(QtWidgets.QLabel("Fit Statistic:"))
+        left_layout.addWidget(QLabel("Fit Statistic:"))
         left_layout.addWidget(self.fit_stat_dropdown)
 
         # Add a label to display the current fit_stat value
-        self.fit_stat_label = QtWidgets.QLabel("Current Fit Stat: N/A")
+        self.fit_stat_label = QLabel("Current Fit Stat: N/A")
         left_layout.addWidget(self.fit_stat_label)
 
         # Add a button to apply the input values
-        self.apply_button = QtWidgets.QPushButton("Apply")
+        self.apply_button = QPushButton("Apply")
         self.apply_button.clicked.connect(self.apply_inputs)
         left_layout.addWidget(self.apply_button)
         # Add input fields for goodness_threshold_lower and goodness_threshold_upper
-        self.goodness_threshold_lower_input = QtWidgets.QLineEdit(
+        self.goodness_threshold_lower_input = QLineEdit(
             str(self.goodness_threshold_lower)
         )
-        self.goodness_threshold_upper_input = QtWidgets.QLineEdit(
+        self.goodness_threshold_upper_input = QLineEdit(
             str(self.goodness_threshold_upper)
         )
-        left_layout.addWidget(QtWidgets.QLabel("Goodness Threshold Lower:"))
+        left_layout.addWidget(QLabel("Goodness Threshold Lower:"))
         left_layout.addWidget(self.goodness_threshold_lower_input)
-        left_layout.addWidget(QtWidgets.QLabel("Goodness Threshold Upper:"))
+        left_layout.addWidget(QLabel("Goodness Threshold Upper:"))
         left_layout.addWidget(self.goodness_threshold_upper_input)
 
         # Add parameter values at the right of the main window
-        right_layout = QtWidgets.QVBoxLayout()
+        right_layout = QVBoxLayout()
         main_layout.addLayout(right_layout)
 
         self.param_labels = []
@@ -152,14 +170,14 @@ class MainWindow(QtWidgets.QWidget):
                 if param.min + self.tolerance < param.value < param.max - self.tolerance
                 else "red"
             )
-            param_label = QtWidgets.QLabel(
-                f"<b style='color:{color}'>{param_name}</b><br>Value: {param.value:.3f}<br>Min: {param.min:.3f}<br>Max: {param.max:.3f}<br>"
+            param_label = QLabel(
+                f"<b style='color:{color}'>{param_name}</b><br>Value: {param.value:.3f}<br>Min: {param.min:.3f}<br>Max: {param.max:.3f}<br>Vary: {param.vary}<br>Expr: {param.expr}<br>"
             )
             self.param_labels.append(param_label)
             right_layout.addWidget(param_label)
 
         # Add a scroll area for the parameter values
-        scroll_area = QtWidgets.QScrollArea()
+        scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setVerticalScrollBarPolicy(
             QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOn
@@ -167,15 +185,15 @@ class MainWindow(QtWidgets.QWidget):
         scroll_area.setHorizontalScrollBarPolicy(
             QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff
         )
-        scroll_content = QtWidgets.QWidget()
-        scroll_layout = QtWidgets.QVBoxLayout(scroll_content)
+        scroll_content = QWidget()
+        scroll_layout = QVBoxLayout(scroll_content)
         for label in self.param_labels:
             scroll_layout.addWidget(label)
         scroll_area.setWidget(scroll_content)
         right_layout.addWidget(scroll_area)
 
         # Add a label to indicate if all parameters are within bounds
-        self.param_status_label = QtWidgets.QLabel("All Parameters Within Bounds")
+        self.param_status_label = QLabel("All Parameters Within Bounds")
         right_layout.addWidget(self.param_status_label)
         self.update_param_status_label()
 
@@ -221,7 +239,7 @@ class MainWindow(QtWidgets.QWidget):
                 else "red"
             )
             param_label.setText(
-                f"<b style='color:{color}'>{param_name}</b><br>Value: {param.value:.3f}<br>Min: {param.min:.3f}<br>Max: {param.max:.3f}<br><br>"
+                f"<b style='color:{color}'>{param_name}</b><br>Value: {param.value:.3f}<br>Min: {param.min:.3f}<br>Max: {param.max:.3f}<br>Vary: {param.vary}<br>Expr: {param.expr}<br>"
             )
 
         self.update_slider_label_color(index)
@@ -274,18 +292,18 @@ class MainWindow(QtWidgets.QWidget):
         self.update_fit_stat_label(tuple(self.slider_values))
         self.update_param_status_label()
 
-    def display(self, return_window: bool = False):
-        if not QtWidgets.QApplication.instance():
-            qapp = QtWidgets.QApplication(sys.argv)
-        else:
-            qapp = QtWidgets.QApplication.instance()  # type: ignore
-        qapp.setStyle("Fusion")
+    # def display(self, return_window: bool = False):
+    #     if not QApplication.instance():
+    #         qapp = QApplication(sys.argv)
+    #     else:
+    #         qapp = QApplication.instance()  # type: ignore
+    #     qapp.setStyle("Fusion")
 
-        if return_window:
-            return self
-        self.show()
-        qapp.exec_()  # type: ignore
-        return None
+    #     if return_window:
+    #         return self
+    #     self.show()
+    #     qapp.exec_()  # type: ignore
+    #     return None
 
 
 @xr.register_dataarray_accessor("display")
@@ -293,7 +311,10 @@ class DisplayAccessor(DataArrayAccessor):
     def __init__(self, xarray_obj):
         super().__init__(xarray_obj)
 
-    def __call__(self, return_window: bool = False):
-        win = MainWindow(xarr=self._obj)
-        win.display(return_window=return_window)
-        return win
+    def __call__(self):
+        app = QApplication.instance() or QApplication([])
+        window = MainWindow(xarr=self._obj)
+        window.show()
+        app.exec()
+        #
+        # win.display(return_window=return_window)
