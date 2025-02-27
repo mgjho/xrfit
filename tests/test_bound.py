@@ -36,4 +36,5 @@ def get_test_data_2d():
 def test_bound():
     data = get_test_data_2d()
     model = LorentzianModel(prefix="p0_")
-    data.fit.fit_with_corr(model=model, bound_ratio=1e-1)
+    fit_result = data.fit.fit_with_corr(model=model, bound_ratio=1e-1)
+    fit_result.display()

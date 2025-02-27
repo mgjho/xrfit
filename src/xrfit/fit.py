@@ -5,8 +5,7 @@ import numpy as np
 import xarray as xr
 
 from xrfit.base import DataArrayAccessor
-
-# from xrfit.params import _set_bounds
+from xrfit.params import _set_bounds
 
 
 def _generalized_guess(model, data, x):
@@ -167,7 +166,7 @@ class FitAccessor(DataArrayAccessor):
         bound_tol: float = 1e-3,
         iter_max: int = 100,
         iter_crit: Literal["rsquared", "chisqr", "redchi"] = "rsquared",
-        iter_tol: float = 0.99,
+        iter_tol: float = 0.001,
         **kws,
     ) -> xr.DataArray:
         """
@@ -213,48 +212,51 @@ class FitAccessor(DataArrayAccessor):
         # if bound_ratio is not None:
         # fit_results = fit_results.params.set_bounds(bound_ratio=bound_ratio)
         previous_params = fit_results.params.parse().isel(start_dict).item()
-
+        previous_iter_crit_val = 0
         for idx in range(start_idx, -1, -1):
             indices = np.unravel_index(idx, dims_tuple)
             index_dict = dict(zip(dims, indices, strict=False))
             single_fit_result = fit_results.isel(index_dict).item()
             for iter_idx in range(iter_max):
                 single_fit_result.fit(params=previous_params, **kws)
-                iter_crit_val = getattr(single_fit_result, iter_crit)
-                # single_fit_result = _set_bounds(
-                #     single_fit_result,
-                #     bound_ratio=bound_ratio + bound_ratio_inc * iter_idx,
-                #     bound_tol=bound_tol,
-                # )
-                fit_results[index_dict] = single_fit_result
-                fit_results.params.set_bounds(
-                    bound_ratio=bound_ratio + bound_ratio_inc * iter_idx,
+                new_bound_ratio = bound_ratio + bound_ratio_inc * iter_idx
+                single_fit_result = _set_bounds(
+                    single_fit_result,
+                    bound_ratio=new_bound_ratio,
                     bound_tol=bound_tol,
-                    index_dict=index_dict,
                 )
-                previous_params = fit_results.params.parse().isel(index_dict).item()
-                if iter_crit_val > iter_tol:
+                previous_params = single_fit_result.params
+                fit_results[index_dict] = single_fit_result
+                iter_crit_val = getattr(single_fit_result, iter_crit)
+                iter_crit_ratio = (
+                    iter_crit_val - previous_iter_crit_val
+                ) / iter_crit_val
+                iter_crit_ratio = np.abs(iter_crit_ratio)
+                if iter_crit_ratio < iter_tol:
                     print(
                         "⚡️ iter_bound tol reached at iter : ",
                         iter_idx,
-                        "iter_crit : ",
-                        iter_crit_val,
+                        "iter_crit_ratio : ",
+                        iter_crit_ratio,
                         "iter_tol : ",
                         iter_tol,
                     )
                     break
+                previous_iter_crit_val = iter_crit_val
                 if iter_idx == iter_max - 1:
                     print(
                         "⚠️ iter_max reached at iter : ",
                         iter_idx,
                         "for idx : ",
                         index_dict,
-                        "iter_crit : ",
-                        iter_crit_val,
+                        "iter_crit_ratio : ",
+                        iter_crit_ratio,
                         "iter_tol : ",
                         iter_tol,
+                        "max_bound : ",
+                        new_bound_ratio,
                     )
-
+        previous_iter_crit_val = 0
         previous_params = fit_results.params.parse().isel(start_dict).item()
         for idx in range(start_idx + 1, total_idx):
             indices = np.unravel_index(idx, dims_tuple)
@@ -262,32 +264,41 @@ class FitAccessor(DataArrayAccessor):
             single_fit_result = fit_results.isel(index_dict).item()
             for iter_idx in range(iter_max):
                 single_fit_result.fit(params=previous_params, **kws)
-                fit_results[index_dict] = single_fit_result
-                fit_results.params.set_bounds(
-                    bound_ratio=bound_ratio + bound_ratio_inc * iter_idx,
+                new_bound_ratio = bound_ratio + bound_ratio_inc * iter_idx
+                single_fit_result = _set_bounds(
+                    single_fit_result,
+                    bound_ratio=new_bound_ratio,
                     bound_tol=bound_tol,
-                    index_dict=index_dict,
                 )
-                previous_params = fit_results.params.parse().isel(index_dict).item()
-                if iter_crit_val > iter_tol:
+                previous_params = single_fit_result.params
+                fit_results[index_dict] = single_fit_result
+                iter_crit_val = getattr(single_fit_result, iter_crit)
+                iter_crit_ratio = (
+                    iter_crit_val - previous_iter_crit_val
+                ) / iter_crit_val
+                iter_crit_ratio = np.abs(iter_crit_ratio)
+                if iter_crit_ratio < iter_tol:
                     print(
                         "⚡️ iter_bound tol reached at iter : ",
                         iter_idx,
-                        "iter_crit : ",
-                        iter_crit_val,
+                        "iter_crit_ratio : ",
+                        iter_crit_ratio,
                         "iter_tol : ",
                         iter_tol,
                     )
                     break
+                previous_iter_crit_val = iter_crit_val
                 if iter_idx == iter_max - 1:
                     print(
                         "⚠️ iter_max reached at iter : ",
                         iter_idx,
                         "for idx : ",
                         index_dict,
-                        "iter_crit : ",
-                        iter_crit_val,
+                        "iter_crit_ratio : ",
+                        iter_crit_ratio,
                         "iter_tol : ",
                         iter_tol,
+                        "max_bound : ",
+                        new_bound_ratio,
                     )
         return fit_results
