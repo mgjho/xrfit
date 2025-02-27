@@ -2,6 +2,7 @@
 
 ### ✨ Features
 
+- improve iterative bound setting by checking relative improvements of iter_crit
 - implement iterative bound using goodness of the fit (#36)
 - improve composite model handling for generalized guess method (#34)
 - add BinAccessor for binning (#31)
