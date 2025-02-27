@@ -102,6 +102,7 @@ class ParamsAccessor(DataArrayAccessor):
                 self._obj,
                 kwargs={
                     "bound_ratio": bound_ratio,
+                    "bound_tol": bound_tol,
                 },
                 vectorize=True,
                 dask="parallelized",
