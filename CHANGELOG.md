@@ -9,6 +9,7 @@
 
 ### 🐞 Bug Fixes
 
+- improve display method (#39)
 - improve iterative bound set method (#37)
 
 ## v0.9.0 (2025-02-11)
