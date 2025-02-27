@@ -4,6 +4,11 @@ from lmfit.models import LorentzianModel
 
 import xrfit
 
+__all__ = [
+    "test_bound",
+    "xrfit",
+]
+
 
 def get_test_data_2d():
     rng = np.random.default_rng(seed=0)
@@ -31,4 +36,4 @@ def get_test_data_2d():
 def test_bound():
     data = get_test_data_2d()
     model = LorentzianModel(prefix="p0_")
-    fit_result = data.fit.fit_with_corr(model=model, bound_ratio=1e-1)
+    data.fit.fit_with_corr(model=model, bound_ratio=1e-1)

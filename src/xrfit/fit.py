@@ -233,8 +233,6 @@ class FitAccessor(DataArrayAccessor):
                     index_dict=index_dict,
                 )
                 previous_params = fit_results.params.parse().isel(index_dict).item()
-                # previous_params = fit_results[index_dict].params
-                print("iter_crit_val", iter_crit_val)
                 if iter_crit_val > iter_tol:
                     print(
                         "⚡️ iter_bound tol reached at iter : ",
@@ -264,23 +262,13 @@ class FitAccessor(DataArrayAccessor):
             single_fit_result = fit_results.isel(index_dict).item()
             for iter_idx in range(iter_max):
                 single_fit_result.fit(params=previous_params, **kws)
-                # print(fit_results[index_dict])
                 fit_results[index_dict] = single_fit_result
-                # print(fit_results[index_dict])
                 fit_results.params.set_bounds(
                     bound_ratio=bound_ratio + bound_ratio_inc * iter_idx,
                     bound_tol=bound_tol,
                     index_dict=index_dict,
                 )
-                print(
-                    "bound_ratio + bound_ratio_inc * iter_idx",
-                    bound_ratio + bound_ratio_inc * iter_idx,
-                )
-                print(fit_results.params.get("center", "max"))
-                # previous_params = single_fit_result.params
                 previous_params = fit_results.params.parse().isel(index_dict).item()
-                print("iter_idx", iter_idx)
-                print("iter_crit_val", iter_crit_val)
                 if iter_crit_val > iter_tol:
                     print(
                         "⚡️ iter_bound tol reached at iter : ",
