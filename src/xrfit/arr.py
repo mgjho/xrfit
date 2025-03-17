@@ -25,7 +25,7 @@ def _get_arr(
     if attr_name == "init_fit":
         return model_result.init_fit
     if attr_name == "residual":
-        return best_fit - data.data
+        return data.data - best_fit
     if attr_name == "data":
         return data
     raise ValueError(
