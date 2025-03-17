@@ -24,10 +24,10 @@ def _get_arr(
         return best_fit
     if attr_name == "init_fit":
         return model_result.init_fit
-    if attr_name == "residual":
-        return best_fit - data.data
     if attr_name == "data":
         return data
+    if attr_name == "residual":
+        return data - best_fit  # Consistent with convention used in lmfit 1.3.3
     raise ValueError(
         f"Invalid attr_name: {attr_name} (must be one of 'best_fit', 'init_fit', 'residual', 'data')"
     )
