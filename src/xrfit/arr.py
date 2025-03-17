@@ -27,7 +27,7 @@ def _get_arr(
     if attr_name == "data":
         return data
     if attr_name == "residual":
-        return best_fit - data  # Corrected the calculation of residual
+        return data - best_fit  # Consistent with convention used in lmfit 1.3.3
     raise ValueError(
         f"Invalid attr_name: {attr_name} (must be one of 'best_fit', 'init_fit', 'residual', 'data')"
     )
