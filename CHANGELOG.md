@@ -2,6 +2,7 @@
 
 ### ✨ Features
 
+- add set_bound option for enabling params bounds (#41)
 - improve iterative bound setting by checking relative improvements of iter_crit
 - implement iterative bound using goodness of the fit (#36)
 - improve composite model handling for generalized guess method (#34)
@@ -10,6 +11,7 @@
 
 ### 🐞 Bug Fixes
 
+- update residual calculation in _get_arr for lmfit 1.3.3 compatibility
 - improve display method (#39)
 - improve iterative bound set method (#37)
 
