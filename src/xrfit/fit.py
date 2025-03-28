@@ -8,6 +8,40 @@ from xrfit.base import DataArrayAccessor
 from xrfit.params import _set_bounds
 
 
+def fit_with_iter_bound(
+    result,
+    init_params,
+    iter_max,
+    iter_crit,
+    iter_tol,
+    bound_ratio,
+    bound_ratio_inc,
+    bound_tol,
+    max_bound_ratio,
+    log,
+    index_dict,
+    **kws,
+):
+    init_val = getattr(result, iter_crit)
+
+    for i in range(iter_max):
+        ratio = min(bound_ratio + bound_ratio_inc * i, max_bound_ratio)
+        result = _set_bounds(result, bound_ratio=ratio, bound_tol=bound_tol)
+        result.fit(params=init_params, **kws)
+
+        crit_val = getattr(result, iter_crit)
+        crit_delta = abs((crit_val - init_val) / crit_val)
+
+        if crit_delta < iter_tol:
+            log(f"⚡️ tol reached at {i=} for {index_dict=}, delta={crit_delta:.3g}")
+            break
+
+        if i == iter_max - 1:
+            log(f"⚠️ max iter reached at {index_dict=}, final delta={crit_delta:.3g}")
+
+    return result
+
+
 def _generalized_guess(model, data, x):
     """Recursively generates initial parameter guesses for lmfit models, including composite and convolved models."""
     params = lf.Parameters()
@@ -164,155 +198,94 @@ class FitAccessor(DataArrayAccessor):
         set_bound: bool = False,
         bound_ratio: float = 0.05,
         bound_ratio_inc: float = 0.05,
-        bound_tol: float = 1e-3,
-        iter_max: int = 100,
+        bound_tol: float = 1e-2,
+        iter_max: int = 20,
         iter_crit: Literal["rsquared", "chisqr", "redchi"] = "rsquared",
-        iter_tol: float = 0.001,
+        iter_tol: float = 0.01,
+        max_bound_ratio: float = 0.3,
+        verbose: bool = True,
         **kws,
     ) -> xr.DataArray:
-        """
-        Fit the model starting from a certain index and use the resulting parameters for the next fit.
+        """Correlated fit with early exit, efficient bounds, and directional propagation."""
+        import time
 
-        Parameters
-        ----------
-        model : lf.model.Model
-            The model to be fitted.
-        start_index : tuple
-            The starting index for the fit.
-        input_core_dims : str, optional
-            The dimension name for the input data, by default "x".
+        def log(*args):
+            if verbose:
+                print(*args)
 
-        Returns
-        -------
-        xr.DataArray
-            The result of the model fitting with correlated parameters.
-        """
         fit_results = self.__call__(
             model=model,
             params=params,
             input_core_dims=input_core_dims,
             **kws,
         )
+
         dims = fit_results.dims
+        shape = tuple(fit_results.sizes[d] for d in dims)
+
         if not isinstance(start_dict, dict):
-            if start_dict == "stat":
-                start_dict = fit_results.assess.best_fit_stat()
-            elif start_dict == "max":
-                start_dict = fit_results.assess.best_fit_max()
-            else:
-                raise ValueError("Invalid value for start_dict.")
-            print("⚡️ No initial coords provided for fit_with_corr")
-            print("⚡️ Estimate used :", start_dict)
-        if isinstance(start_dict, dict):
-            start_tuple = tuple(start_dict.values())
-        else:
-            raise TypeError("start_dict must be a dictionary.")
-        dims_tuple = tuple(fit_results.sizes[dim] for dim in dims)
-        start_idx = np.ravel_multi_index(start_tuple, dims_tuple)
-        total_idx = np.prod(dims_tuple)
-        # if bound_ratio is not None:
-        # fit_results = fit_results.params.set_bounds(bound_ratio=bound_ratio)
-        previous_params = fit_results.params.parse().isel(start_dict).item()
-        previous_iter_crit_val = 0
-        for idx in range(start_idx, -1, -1):
-            indices = np.unravel_index(idx, dims_tuple)
-            index_dict = dict(zip(dims, indices, strict=False))
-            single_fit_result = fit_results.isel(index_dict).item()
+            start_dict = (
+                fit_results.assess.best_fit_stat()
+                if start_dict == "stat"
+                else fit_results.assess.best_fit_max()
+            )
+            log("⚡️ Start index estimated:", start_dict)
 
-            if set_bound:
-                for iter_idx in range(iter_max):
-                    single_fit_result.fit(params=previous_params, **kws)
-                    new_bound_ratio = bound_ratio + bound_ratio_inc * iter_idx
-                    single_fit_result = _set_bounds(
-                        single_fit_result,
-                        bound_ratio=new_bound_ratio,
-                        bound_tol=bound_tol,
-                    )
-                    previous_params = single_fit_result.params
-                    fit_results[index_dict] = single_fit_result
-                    iter_crit_val = getattr(single_fit_result, iter_crit)
-                    iter_crit_ratio = (
-                        iter_crit_val - previous_iter_crit_val
-                    ) / iter_crit_val
-                    iter_crit_ratio = np.abs(iter_crit_ratio)
-                    if iter_crit_ratio < iter_tol:
-                        print(
-                            "⚡️ iter_bound tol reached at iter : ",
-                            iter_idx,
-                            "iter_crit_ratio : ",
-                            iter_crit_ratio,
-                            "iter_tol : ",
-                            iter_tol,
-                        )
-                        break
-                    previous_iter_crit_val = iter_crit_val
-                    if iter_idx == iter_max - 1:
-                        print(
-                            "⚠️ iter_max reached at iter : ",
-                            iter_idx,
-                            "for idx : ",
-                            index_dict,
-                            "iter_crit_ratio : ",
-                            iter_crit_ratio,
-                            "iter_tol : ",
-                            iter_tol,
-                            "max_bound : ",
-                            new_bound_ratio,
-                        )
-            else:
-                single_fit_result.fit(params=previous_params, **kws)
-                fit_results[index_dict] = single_fit_result
-                previous_params = single_fit_result.params
+        start_tuple = tuple(start_dict[dim] for dim in dims)
+        start_idx = np.ravel_multi_index(start_tuple, shape)
+        total_idx = np.prod(shape)
 
-        previous_iter_crit_val = 0
-        previous_params = fit_results.params.parse().isel(start_dict).item()
-        for idx in range(start_idx + 1, total_idx):
-            indices = np.unravel_index(idx, dims_tuple)
-            index_dict = dict(zip(dims, indices, strict=False))
-            single_fit_result = fit_results.isel(index_dict).item()
-            if set_bound:
-                for iter_idx in range(iter_max):
-                    single_fit_result.fit(params=previous_params, **kws)
-                    new_bound_ratio = bound_ratio + bound_ratio_inc * iter_idx
-                    single_fit_result = _set_bounds(
-                        single_fit_result,
-                        bound_ratio=new_bound_ratio,
-                        bound_tol=bound_tol,
-                    )
-                    previous_params = single_fit_result.params
-                    fit_results[index_dict] = single_fit_result
-                    iter_crit_val = getattr(single_fit_result, iter_crit)
-                    iter_crit_ratio = (
-                        iter_crit_val - previous_iter_crit_val
-                    ) / iter_crit_val
-                    iter_crit_ratio = np.abs(iter_crit_ratio)
-                    if iter_crit_ratio < iter_tol:
-                        print(
-                            "⚡️ iter_bound tol reached at iter : ",
-                            iter_idx,
-                            "iter_crit_ratio : ",
-                            iter_crit_ratio,
-                            "iter_tol : ",
-                            iter_tol,
-                        )
-                        break
-                    previous_iter_crit_val = iter_crit_val
-                    if iter_idx == iter_max - 1:
-                        print(
-                            "⚠️ iter_max reached at iter : ",
-                            iter_idx,
-                            "for idx : ",
-                            index_dict,
-                            "iter_crit_ratio : ",
-                            iter_crit_ratio,
-                            "iter_tol : ",
-                            iter_tol,
-                            "max_bound : ",
-                            new_bound_ratio,
-                        )
-            else:
-                single_fit_result.fit(params=previous_params, **kws)
-                fit_results[index_dict] = single_fit_result
-                previous_params = single_fit_result.params
+        bound_ratios = np.clip(
+            bound_ratio + bound_ratio_inc * np.arange(iter_max), None, max_bound_ratio
+        )
+
+        def process_voxel(flat_idx, initial_params):
+            coord = np.unravel_index(flat_idx, shape)
+            index_dict = dict(zip(dims, coord, strict=True))
+            result = fit_results.isel(index_dict).item()
+
+            t0 = time.time()
+
+            if not set_bound:
+                result.fit(params=initial_params, **kws)
+                fit_results[index_dict] = result
+                log(f"✅ Fit (no bound) at {index_dict} in {time.time() - t0:.2f}s")
+                return result.params
+
+            # Initial trial fit
+            result.fit(params=initial_params, **kws)
+            fit_results[index_dict] = result
+            init_val = getattr(result, iter_crit)
+            if iter_crit == "rsquared" and init_val > 0.99:
+                log(f"✅ Early exit at {index_dict} — R² > 0.99")
+                return result.params
+
+            prev_delta = float("inf")
+            for i, ratio in enumerate(bound_ratios):
+                result = _set_bounds(result, bound_ratio=ratio, bound_tol=bound_tol)
+                result.fit(params=initial_params, **kws)
+                fit_results[index_dict] = result
+
+                val = getattr(result, iter_crit)
+                delta = abs((val - init_val) / val)
+
+                if delta < iter_tol:
+                    log(f"⚡️ Tol hit at {i=} for {index_dict}, Δ={delta:.3g}")
+                    break
+                if i > 1 and delta > prev_delta:
+                    log(f"🛑 No gain at {i=} for {index_dict}, breaking.")
+                    break
+                prev_delta = delta
+
+            log(f"⏱️ Fit at {index_dict} in {time.time() - t0:.2f}s")
+            return result.params
+
+        def propagate(index_iter):
+            prev_params = fit_results.params.parse().isel(start_dict).item()
+            for idx in index_iter:
+                prev_params = process_voxel(idx, prev_params)
+
+        propagate(range(start_idx - 1, -1, -1))  # Backward
+        propagate(range(start_idx + 1, total_idx))  # Forward
 
         return fit_results
